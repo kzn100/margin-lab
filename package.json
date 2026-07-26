@@ -10,6 +10,7 @@
     "test": "node --experimental-strip-types --test \"src/**/*.test.ts\""
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.8",
     "exceljs": "^4.4.0",
