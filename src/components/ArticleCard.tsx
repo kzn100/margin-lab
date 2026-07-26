@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { type Article, imageUrl } from "@/lib/articles";
+import { type Article, squareImage, wideImage } from "@/lib/articles";
 import styles from "./ArticleCard.module.css";
 
 /**
@@ -14,10 +14,10 @@ export function ArticleCard({ article, feature = false }: { article: Article; fe
       <Link href={`/articles/${article.slug}`} className={`${styles.card} ${styles.feature}`}>
         <Image
           className={styles.img}
-          src={imageUrl(article.imageSeed, 1200, 800)}
+          src={wideImage(article)}
           alt={article.imageAlt}
-          width={1200}
-          height={800}
+          width={1600}
+          height={900}
           sizes="(max-width: 900px) 100vw, 620px"
         />
         <span className={styles.kicker}>{article.kicker}</span>
@@ -34,10 +34,10 @@ export function ArticleCard({ article, feature = false }: { article: Article; fe
     <Link href={`/articles/${article.slug}`} className={`${styles.card} ${styles.row}`}>
       <Image
         className={styles.thumb}
-        src={imageUrl(article.imageSeed, 400, 400)}
+        src={squareImage(article)}
         alt={article.imageAlt}
-        width={400}
-        height={400}
+        width={1200}
+        height={1200}
         sizes="96px"
       />
       <span className={styles.rowBody}>

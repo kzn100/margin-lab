@@ -25,8 +25,13 @@ export type Article = {
   initials: string;
   date: string;
   readMinutes: number;
-  /** picsum seed. Same seed always resolves to the same photograph. */
-  imageSeed: string;
+  /**
+   * Local asset basename under /public/articles. Two crops per article:
+   * `-wide.jpg` (16:9) and `-square.jpg` (1:1) for the art-directed mobile
+   * hero. Local rather than a remote placeholder service so the build has no
+   * runtime dependency on a third party and works offline.
+   */
+  image: string;
   imageAlt: string;
   body: Block[];
 };
@@ -42,7 +47,7 @@ export const ARTICLES: Article[] = [
     initials: "NA",
     date: "14 Jul 2026",
     readMinutes: 7,
-    imageSeed: "rgm-101-price-volume-mix-shelf",
+    image: "price-volume-mix",
     imageAlt: "Packaged goods on a wholesale shelf, price labels facing forward",
     body: [
       {
@@ -119,7 +124,7 @@ export const ARTICLES: Article[] = [
     initials: "NA",
     date: "28 Jun 2026",
     readMinutes: 6,
-    imageSeed: "rgm-opex-ratio-warehouse",
+    image: "opex-ratio",
     imageAlt: "Warehouse aisle with pallet racking",
     body: [
       {
@@ -153,7 +158,7 @@ export const ARTICLES: Article[] = [
     initials: "NA",
     date: "09 Jun 2026",
     readMinutes: 4,
-    imageSeed: "rgm-pnl-bridge-ledger",
+    image: "reading-a-pnl-bridge",
     imageAlt: "Printed financial statement on a desk",
     body: [
       {
@@ -182,7 +187,7 @@ export const ARTICLES: Article[] = [
     initials: "NA",
     date: "21 May 2026",
     readMinutes: 8,
-    imageSeed: "rgm-discount-payback-market",
+    image: "when-a-discount-pays",
     imageAlt: "Wholesale market stall with produce crates",
     body: [
       {
@@ -207,6 +212,10 @@ export function getArticle(slug: string): Article | undefined {
   return ARTICLES.find((a) => a.slug === slug);
 }
 
-export function imageUrl(seed: string, w: number, h: number): string {
-  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
+export function wideImage(article: Article): string {
+  return `/articles/${article.image}-wide.jpg`;
+}
+
+export function squareImage(article: Article): string {
+  return `/articles/${article.image}-square.jpg`;
 }

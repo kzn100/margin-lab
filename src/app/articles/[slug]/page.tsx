@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { ArticleCard } from "@/components/ArticleCard";
-import { ARTICLES, getArticle, imageUrl } from "@/lib/articles";
+import { ARTICLES, getArticle, squareImage, wideImage } from "@/lib/articles";
 import styles from "./article.module.css";
 
 /** Every article is known at build time, so prerender them all. */
@@ -63,12 +63,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               <picture>
                 <source
                   media="(max-width: 620px)"
-                  srcSet={imageUrl(article.imageSeed, 900, 900)}
-                  width={900}
-                  height={900}
+                  srcSet={squareImage(article)}
+                  width={1200}
+                  height={1200}
                 />
                 <Image
-                  src={imageUrl(article.imageSeed, 1600, 900)}
+                  src={wideImage(article)}
                   alt={article.imageAlt}
                   width={1600}
                   height={900}
