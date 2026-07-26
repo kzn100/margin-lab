@@ -1,0 +1,111 @@
+/* /admin/marketing — tabs, cards, banners and controls come from tokens.css. */
+
+.sec {
+  margin-top: 16px;
+}
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (max-width: 860px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+}
+.stack {
+  display: grid;
+  gap: 18px;
+}
+.panel {
+  padding-top: 22px;
+}
+.h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.note {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.preview {
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface-2);
+  padding: 18px;
+  min-height: 220px;
+}
+.preview .subject {
+  font-size: 15px;
+  font-weight: 600;
+}
+.preview .from {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.preview .bodycopy {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-top: 12px;
+  white-space: pre-wrap;
+}
+
+.recipients {
+  display: grid;
+  gap: 1px;
+  max-height: 214px;
+  overflow-y: auto;
+}
+.recipients div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 2px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+}
+.recipients .e {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.counter {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: right;
+}
+.textarea {
+  min-height: 132px;
+  resize: vertical;
+  line-height: 1.55;
+  font-size: 14px;
+}
+.setup {
+  display: grid;
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+}
+.setup li {
+  display: flex;
+  gap: 11px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.setup .badge {
+  border-radius: var(--r-ctrl);
+}

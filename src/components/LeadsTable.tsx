@@ -76,11 +76,14 @@ export function LeadsTable({
   sort,
   dir,
   sortHrefs,
+  filterQuery,
 }: {
   leads: LeadRow[];
   sort: string;
   dir: "asc" | "desc";
   sortHrefs: SortHrefs;
+  /** Current filter as a querystring, so an untouched table can still be a segment. */
+  filterQuery: string | null;
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -104,21 +107,32 @@ export function LeadsTable({
             Clear
           </button>
           <span className="spacer" />
-          {/* Enabled once /admin/marketing exists — module 05. A live button
-              pointing at a 404 is worse than an honest disabled one. */}
-          <button
+          <Link
             className="btn btn-primary"
-            type="button"
-            aria-disabled="true"
-            disabled
-            title="The marketing panel arrives with the push-marketing module"
+            href={`/admin/marketing?ids=${[...selected].join(",")}`}
           >
             Send to marketing
-          </button>
+          </Link>
         </div>
       )}
 
-      <div className="dtable-wrap" style={{ marginTop: selected.size > 0 ? 18 : 0 }}>
+      {selected.size === 0 && filterQuery !== null && (
+        <div className="selbar" role="status">
+          <span>Nothing ticked</span>
+          <span style={{ color: "var(--text-secondary)" }}>
+            Send to every lead matching the current filter instead
+          </span>
+          <span className="spacer" />
+          <Link
+            className="btn btn-ghost"
+            href={`/admin/marketing${filterQuery ? `?${filterQuery}` : ""}`}
+          >
+            Use this filter as the segment
+          </Link>
+        </div>
+      )}
+
+      <div className="dtable-wrap" style={{ marginTop: 18 }}>
         <table className="dtable">
           <thead>
             <tr>

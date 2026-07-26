@@ -16,6 +16,7 @@ import {
   withParam,
 } from "@/lib/admin/leads";
 import { roleOf } from "@/lib/auth";
+import { segmentQuery } from "@/lib/marketing/segment";
 import type { PnlMetrics } from "@/lib/pnl/compute";
 import { createClient } from "@/lib/supabase/server";
 import s from "./admin.module.css";
@@ -336,7 +337,19 @@ export default async function AdminPage({
             </div>
           ) : (
             <>
-              <LeadsTable leads={rows} sort={filters.sort} dir={filters.dir} sortHrefs={sortHrefs} />
+              <LeadsTable
+                leads={rows}
+                sort={filters.sort}
+                dir={filters.dir}
+                sortHrefs={sortHrefs}
+                filterQuery={segmentQuery({
+                  kind: "filter",
+                  q: filters.q,
+                  type: filters.type,
+                  role: filters.role,
+                  since: filters.since,
+                })}
+              />
 
               <div className="pager" style={{ marginTop: 16 }}>
                 <span>
