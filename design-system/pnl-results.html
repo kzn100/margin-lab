@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P&amp;L Analysis · Seri Murni Foods Sdn Bhd</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   P&L RESULTS PAGE  ·  /results/[id]
+   Tokens, shell, buttons, cards and controls come from tokens.css.
+   Only chart-surface styles live here.
+   ============================================================ */
+
+.filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px 0 26px; }
+.filters .spacer { margin-left: auto; }
+.pagehead .banner { margin-top: 20px; }
+
+/* hero + stat tiles now live in tokens.css (§4.1, §4.2) */
+.heroband { margin-bottom: 16px; }
+
+/* ---------- chart cards ---------- */
+.sec { margin-top: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.plot { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.legend i { width: 10px; height: 10px; border-radius: 999px; flex: none; }
+.legend i.line { width: 14px; height: 2px; border-radius: 2px; }
+.foot { margin-top: 12px; font-size: 11px; color: var(--text-muted); }
+main > .cta { margin-top: 16px; }
+
+/* ---------- table view ---------- */
+.tablewrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+thead th {
+  text-align: right; font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  color: var(--text-muted); padding: 0 0 10px; white-space: nowrap;
+  border-bottom: 1px solid var(--axis);
+}
+thead th:first-child { text-align: left; }
+tbody td {
+  text-align: right; font-size: 14px; padding: 11px 0;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+tbody td:first-child { text-align: left; font-variant-numeric: normal; }
+tbody td + td { padding-left: 20px; }
+tbody tr.total td { font-weight: 600; }
+tbody tr.rule td { border-bottom-width: 2px; border-bottom-color: var(--axis); }
+tbody tr.sub td:first-child { padding-left: 16px; color: var(--text-secondary); }
+.v-good { color: var(--success-text); font-weight: 600; }
+.v-bad  { color: var(--critical); font-weight: 600; }
+
+/* chart tooltip (#tip) now lives in tokens.css */
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wrap">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <rect x="1" y="1" width="20" height="20" rx="5" fill="var(--accent)"/>
+        <path d="M6 14.5 L9.5 10 L12.5 12.5 L16 6.5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Margin Lab
+    </div>
+    <nav>
+      <a class="opt" href="#bridge">Bridge</a>
+      <a class="opt" href="#trend">Trend</a>
+      <a class="opt" href="#statement">Statement</a>
+      <a href="#" style="color:var(--text-primary)">Dashboard</a>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch theme" title="Switch theme">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3.1"/>
+          <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2 3.1 3.1"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="pagehead">
+    <h1>Seri Murni Foods Sdn Bhd</h1>
+    <p class="meta">Full-year P&amp;L for FY2025 (Jan to Dec), compared against FY2024 · uploaded 26 Jul 2026</p>
+    <div class="banner">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="1.5" y="3" width="13" height="10" rx="2"/><path d="m2 4.5 6 4 6-4"/>
+      </svg>
+      A copy of this analysis has been sent to finance@serimurni.com.my
+    </div>
+  </section>
+
+  <div class="filters">
+    <div class="seg" role="group" aria-label="Period">
+      <button aria-pressed="true">FY2025</button>
+      <button aria-pressed="false">H2</button>
+      <button aria-pressed="false">Q4</button>
+    </div>
+    <select class="ctrl" aria-label="Comparison">
+      <option>vs FY2024</option>
+      <option>vs budget</option>
+      <option>No comparison</option>
+    </select>
+    <select class="ctrl" aria-label="Entity">
+      <option>All entities</option>
+      <option>Retail division</option>
+      <option>Food service division</option>
+    </select>
+    <span class="spacer"></span>
+    <button class="btn btn-ghost" id="tableBtn" aria-expanded="false" aria-controls="statement">View as table</button>
+  </div>
+
+  <!-- ============ hero + stat tiles ============ -->
+  <section class="heroband">
+    <figure class="card hero">
+      <span class="lbl">Net profit, FY2025</span>
+      <span class="fig" id="heroFig">RM 240k</span>
+      <span class="sub">
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          RM 249k <span class="per">vs FY2024</span>
+        </span>
+      </span>
+      <span class="sub">Turned from a RM 9k loss into profit. Net margin 4.0 percent.</span>
+    </figure>
+
+    <div class="tiles">
+      <figure class="card tile" data-tile="rev">
+        <span class="lbl">Revenue</span>
+        <div class="val">RM 6.03M</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          15.9% <span class="per">YoY</span>
+        </span>
+        <svg class="spark" viewBox="0 0 200 40" aria-hidden="true"></svg>
+      </figure>
+
+      <figure class="card tile" data-tile="gm">
+        <span class="lbl">Gross margin</span>
+        <div class="val">41.7%</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          2.6pp <span class="per">YoY</span>
+        </span>
+        <svg class="spark" viewBox="0 0 200 40" aria-hidden="true"></svg>
+      </figure>
+
+      <figure class="card tile" data-tile="opexratio">
+        <span class="lbl">Opex ratio</span>
+        <div class="val">35.6%</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 2v7M2.3 5.8 5.5 9l3.2-3.2"/></svg>
+          2.5pp <span class="per">YoY</span>
+        </span>
+        <svg class="spark" viewBox="0 0 200 40" aria-hidden="true"></svg>
+      </figure>
+
+      <figure class="card tile" data-tile="nm">
+        <span class="lbl">Net margin</span>
+        <div class="val">4.0%</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          4.2pp <span class="per">YoY</span>
+        </span>
+        <svg class="spark" viewBox="0 0 200 40" aria-hidden="true"></svg>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ============ bridge ============ -->
+  <section class="sec card" id="bridge">
+    <div class="chdr">
+      <div>
+        <h2>Revenue to net profit</h2>
+        <p>Every ringgit of revenue, and where it left the business.</p>
+      </div>
+      <span class="chip">RM '000</span>
+    </div>
+    <svg class="plot" id="chartBridge" viewBox="0 0 1180 400" role="img" aria-label="Waterfall from revenue 6,034 thousand ringgit down to net profit 240 thousand ringgit"></svg>
+    <div class="legend">
+      <span><i style="background:var(--s1)"></i>Subtotal</span>
+      <span><i style="background:var(--critical)"></i>Deduction</span>
+      <span><i style="background:var(--good)"></i>Addition</span>
+    </div>
+  </section>
+
+  <!-- ============ trend ============ -->
+  <section class="sec card" id="trend">
+    <div class="chdr">
+      <div>
+        <h2>Revenue, total cost and net profit by month</h2>
+        <p>One axis in ringgit. The gap between the two columns is the net profit line.</p>
+      </div>
+      <span class="chip">RM '000</span>
+    </div>
+    <svg class="plot" id="chartTrend" viewBox="0 0 1180 400" role="img" aria-label="Monthly revenue and total cost columns with a net profit line, crossing from loss to profit in June"></svg>
+    <div class="legend">
+      <span><i style="background:var(--s1)"></i>Revenue</span>
+      <span><i style="background:var(--s2)"></i>Total cost</span>
+      <span><i class="line" style="background:var(--s3)"></i>Net profit</span>
+    </div>
+    <p class="foot">Total cost is cost of goods sold plus operating expenses plus finance costs and tax.</p>
+  </section>
+
+  <!-- ============ margins + opex ============ -->
+  <section class="sec grid2">
+    <div class="card">
+      <div class="chdr">
+        <div>
+          <h2>Margin ladder by month</h2>
+          <p>Percentages get their own chart. Never a second axis.</p>
+        </div>
+        <span class="chip">% of revenue</span>
+      </div>
+      <svg class="plot" id="chartMargin" viewBox="0 0 570 330" role="img" aria-label="Gross, operating and net margin percentage lines by month, all rising through the year"></svg>
+      <div class="legend">
+        <span><i class="line" style="background:var(--s1)"></i>Gross margin</span>
+        <span><i class="line" style="background:var(--s2)"></i>Operating margin</span>
+        <span><i class="line" style="background:var(--s3)"></i>Net margin</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="chdr">
+        <div>
+          <h2>Operating expenses by category</h2>
+          <p>Nominal categories, so one hue. Length carries the value.</p>
+        </div>
+        <span class="chip">RM '000</span>
+      </div>
+      <svg class="plot" id="chartOpex" viewBox="0 0 570 330" role="img" aria-label="Horizontal bars of operating expense categories, payroll largest at 1,042 thousand ringgit"></svg>
+      <p class="foot">Payroll alone is 17.3 percent of revenue. The next four categories together are 15.1 percent.</p>
+    </div>
+  </section>
+
+  <!-- ============ price / volume / mix ============ -->
+  <section class="sec card">
+    <div class="chdr">
+      <div>
+        <h2>Why revenue moved</h2>
+        <p>RM 5.21M to RM 6.03M. The RM 826k of growth, split three ways.</p>
+      </div>
+      <span class="chip">RM '000</span>
+    </div>
+    <svg class="plot" id="chartPvm" viewBox="0 0 1180 220" role="img" aria-label="Price contributed 512, volume 389, mix minus 75 thousand ringgit to revenue growth"></svg>
+    <div class="legend">
+      <span><i style="background:var(--good)"></i>Added to revenue</span>
+      <span><i style="background:var(--critical)"></i>Removed from revenue</span>
+    </div>
+    <p class="foot">Mix is negative because growth came from lower-priced retail packs rather than food service cases.</p>
+  </section>
+
+  <!-- ============ statement ============ -->
+  <section class="sec card hidden" id="statement">
+    <div class="chdr">
+      <div>
+        <h2>Profit and loss statement</h2>
+        <p>Every number behind the charts above.</p>
+      </div>
+      <span class="chip">RM '000</span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th scope="col">Line item</th><th scope="col">FY2025</th><th scope="col">FY2024</th><th scope="col">Variance</th><th scope="col">Change</th></tr>
+        </thead>
+        <tbody>
+          <tr class="total"><td>Revenue</td><td>6,034</td><td>5,208</td><td class="v-good">+826</td><td class="v-good">+15.9%</td></tr>
+          <tr><td>Cost of goods sold</td><td>(3,517)</td><td>(3,172)</td><td class="v-bad">(345)</td><td class="v-bad">+10.9%</td></tr>
+          <tr class="total rule"><td>Gross profit</td><td>2,517</td><td>2,036</td><td class="v-good">+481</td><td class="v-good">+23.6%</td></tr>
+          <tr class="sub"><td>Payroll</td><td>(1,042)</td><td>(961)</td><td class="v-bad">(81)</td><td class="v-bad">+8.4%</td></tr>
+          <tr class="sub"><td>Marketing</td><td>(386)</td><td>(344)</td><td class="v-bad">(42)</td><td class="v-bad">+12.2%</td></tr>
+          <tr class="sub"><td>Rent and utilities</td><td>(264)</td><td>(258)</td><td class="v-bad">(6)</td><td class="v-bad">+2.3%</td></tr>
+          <tr class="sub"><td>Logistics</td><td>(198)</td><td>(171)</td><td class="v-bad">(27)</td><td class="v-bad">+15.8%</td></tr>
+          <tr class="sub"><td>Software and IT</td><td>(121)</td><td>(103)</td><td class="v-bad">(18)</td><td class="v-bad">+17.5%</td></tr>
+          <tr class="sub"><td>Professional fees</td><td>(74)</td><td>(89)</td><td class="v-good">+15</td><td class="v-good">-16.9%</td></tr>
+          <tr class="sub"><td>Other</td><td>(63)</td><td>(56)</td><td class="v-bad">(7)</td><td class="v-bad">+12.5%</td></tr>
+          <tr class="total"><td>Total operating expenses</td><td>(2,148)</td><td>(1,982)</td><td class="v-bad">(166)</td><td class="v-bad">+8.4%</td></tr>
+          <tr class="total rule"><td>Operating profit</td><td>369</td><td>54</td><td class="v-good">+315</td><td class="v-good">+583%</td></tr>
+          <tr><td>Finance costs</td><td>(58)</td><td>(63)</td><td class="v-good">+5</td><td class="v-good">-7.9%</td></tr>
+          <tr><td>Tax</td><td>(71)</td><td>0</td><td class="v-bad">(71)</td><td>n/a</td></tr>
+          <tr class="total rule"><td>Net profit</td><td>240</td><td>(9)</td><td class="v-good">+249</td><td>n/a</td></tr>
+          <tr class="total"><td>Net margin</td><td>4.0%</td><td>-0.2%</td><td class="v-good">+4.2pp</td><td>n/a</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="foot">Sample data. Figures in thousands of ringgit. Bracketed figures are deductions.</p>
+  </section>
+
+  <section class="cta">
+    <div>
+      <h2>Your margin gap is RM 1.4M</h2>
+      <p>Peers at your revenue band run a 9.2 percent net margin. Closing half of that gap is worth RM 310k a year. Book a 30 minute review and we will show you the three levers, ranked.</p>
+    </div>
+    <a class="btn btn-primary" href="#">Book a review</a>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Margin Lab</span>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+    <span style="margin-left:auto">Sample analysis. Not financial advice.</span>
+  </div>
+</footer>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script src="chart.js"></script>
+<script>
+/* ============================================================
+   DATA  ·  sample, in RM '000
+   ============================================================ */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const REVENUE = [412,388,447,461,434,498,523,507,561,588,574,641];
+const COST    = [426,410,451,458,444,484,501,481,521,538,526,554];
+const NET     = [-14,-22,-4,3,-10,14,22,26,40,50,48,87];
+const GM      = [40.0,39.2,40.0,41.2,39.6,41.4,41.9,42.6,42.6,43.2,42.7,43.7];
+const OM      = [-0.7,-2.8,1.6,3.0,0.2,5.0,6.3,7.3,9.1,10.2,10.1,15.1];
+const NM      = [-3.4,-5.7,-0.9,0.7,-2.3,2.8,4.2,5.1,7.1,8.5,8.4,13.6];
+const OPEXR   = [40.8,42.0,38.5,38.2,39.4,36.3,35.6,35.3,33.5,33.0,32.6,28.5];
+
+const BRIDGE = [
+  { label:'Revenue',            short:['Revenue'],            abbr:'Rev',  type:'total', value: 6034 },
+  { label:'Cost of goods sold', short:['COGS'],               abbr:'COGS', type:'dec',   value:-3517 },
+  { label:'Gross profit',       short:['Gross','profit'],     abbr:'GP',   type:'total', value: 2517 },
+  { label:'Operating expenses', short:['Opex'],               abbr:'Opex', type:'dec',   value:-2148 },
+  { label:'Operating profit',   short:['Operating','profit'], abbr:'OP',   type:'total', value:  369 },
+  { label:'Finance costs',      short:['Finance'],            abbr:'Fin',  type:'dec',   value:  -58 },
+  { label:'Tax',                short:['Tax'],                abbr:'Tax',  type:'dec',   value:  -71 },
+  { label:'Net profit',         short:['Net','profit'],       abbr:'NP',   type:'total', value:  240 },
+];
+
+const OPEX = [
+  { label:'Payroll',            abbr:'Payroll',   value:1042, pct:17.3 },
+  { label:'Marketing',          abbr:'Marketing', value: 386, pct: 6.4 },
+  { label:'Rent and utilities', abbr:'Rent',      value: 264, pct: 4.4 },
+  { label:'Logistics',          abbr:'Logistics', value: 198, pct: 3.3 },
+  { label:'Software and IT',    abbr:'Software',  value: 121, pct: 2.0 },
+  { label:'Professional fees',  abbr:'Fees',      value:  74, pct: 1.2 },
+  { label:'Other',              abbr:'Other',     value:  63, pct: 1.0 },
+];
+
+const PVM = [
+  { label:'Price',  value: 512, note:'Average selling price up 9.8 percent' },
+  { label:'Volume', value: 389, note:'Units sold up 7.5 percent' },
+  { label:'Mix',    value: -75, note:'Shift toward lower-priced retail packs' },
+];
+
+/* ============================================================
+   CHARTS
+   All five re-lay-out on resize via responsiveChart (chart.js),
+   so 1 viewBox unit is always 1 CSS px and axis text never shrinks.
+   Below NARROW they change WHAT they draw, not just their size.
+   ============================================================ */
+
+/* ---------- 1 · waterfall bridge ---------- */
+responsiveChart(
+  document.getElementById('chartBridge'),
+  w => (isNarrow(w) ? 330 : 400),
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    const M = { t: 30, r: narrow ? 10 : 16, b: narrow ? 34 : 52, l: narrow ? 42 : 58 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+
+    let run = 0, max = 0;
+    const geo = BRIDGE.map(s => {
+      const start = s.type === 'total' ? 0 : run;
+      const end   = s.type === 'total' ? s.value : run + s.value;
+      run = end;
+      max = Math.max(max, start, end);
+      return { ...s, start, end };
+    });
+    const niceMax = Math.ceil(max / 1000) * 1000;
+    const Y = v => M.t + ih - (v / niceMax) * ih;
+
+    const step = niceStep(niceMax, narrow ? 3 : 5);
+    for (let v = 0; v <= niceMax; v += step) {
+      el('line', { x1: M.l, x2: W - M.r, y1: Y(v), y2: Y(v),
+                   stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      text(svg, M.l - 8, Y(v) + 4, fmtK(v), { anchor: 'end', size: narrow ? 11 : 12, tabular: true });
+    }
+
+    const band = iw / geo.length;
+    const BW = Math.min(24, band - (narrow ? 8 : 16));
+    geo.forEach((s, i) => {
+      const cx = M.l + band * i + band / 2;
+      const x = cx - BW / 2;
+      const top = Math.min(Y(s.start), Y(s.end));
+      const h = Math.abs(Y(s.end) - Y(s.start));
+      const fill = s.type === 'total' ? 'var(--s1)' : s.type === 'dec' ? 'var(--critical)' : 'var(--good)';
+
+      if (i > 0) {
+        el('line', { x1: M.l + band * (i - 1) + band / 2 + BW / 2 + 2, x2: x - 2,
+                     y1: Y(geo[i - 1].end), y2: Y(geo[i - 1].end),
+                     stroke: 'var(--axis)', 'stroke-width': 1,
+                     'vector-effect': 'non-scaling-stroke' }, svg);
+      }
+
+      const p = el('path', { d: barPath(x, top, BW, Math.max(h, 2), 4, s.end >= s.start ? 'up' : 'down'), fill }, svg);
+
+      /* Value labels do not fit above 24px-wide bars on a phone, so on
+         narrow screens the value moves into the tooltip and the table. */
+      if (!narrow) {
+        text(svg, cx, top - 9,
+             (s.type === 'total' ? '' : (s.value > 0 ? '+' : '−')) + fmtK(Math.abs(s.value)),
+             { size: 12, weight: 600, fill: 'var(--text-primary)', tabular: true });
+      }
+
+      /* Full two-line names need ~70px of band. Below that, abbreviate. */
+      const lines = narrow ? [s.abbr] : s.short;
+      lines.forEach((line, li) => {
+        text(svg, cx, M.t + ih + 18 + li * 15, line,
+             { size: narrow ? 11 : 12, fill: 'var(--text-secondary)' });
+      });
+
+      const hit = el('rect', { x: cx - band / 2, y: M.t, width: band, height: ih, fill: 'transparent' }, svg);
+      bindTip(hit, () => `<div class="t-title">${s.label}</div>` +
+        row(fill, s.type === 'total' ? 'Subtotal' : 'Effect',
+            (s.type === 'total' ? '' : (s.value > 0 ? '+' : '−')) + 'RM ' + fmtK(Math.abs(s.value)) + 'k') +
+        row(null, 'Running total', 'RM ' + fmtK(s.end) + 'k'));
+      hit.addEventListener('pointerenter', () => p.setAttribute('fill-opacity', '0.78'));
+      hit.addEventListener('pointerleave', () => p.setAttribute('fill-opacity', '1'));
+    });
+  }
+);
+
+/* ---------- 2 · grouped columns + line, ONE axis ---------- */
+responsiveChart(
+  document.getElementById('chartTrend'),
+  w => (isNarrow(w) ? 320 : 400),
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    const M = { t: 26, r: narrow ? 14 : 46, b: 38, l: narrow ? 42 : 58 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    const lo = -100, hi = 700;
+    const Y = v => M.t + ih - ((v - lo) / (hi - lo)) * ih;
+
+    for (let v = lo; v <= hi; v += 100) {
+      if (v % 200 !== 0 && v !== 0) continue;
+      el('line', { x1: M.l, x2: W - M.r, y1: Y(v), y2: Y(v),
+                   stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      text(svg, M.l - 8, Y(v) + 4, fmtK(v), { anchor: 'end', size: narrow ? 11 : 12, tabular: true });
+    }
+
+    const band = iw / 12;
+    const GAP = narrow ? 1 : 2;
+    const BW = Math.max(4, Math.min(24, (band - (narrow ? 8 : 26) - GAP) / 2));
+    /* Tick labels need ~26px each. Thin the axis rather than overlap it. */
+    const every = Math.max(1, Math.ceil(30 / band));
+
+    MONTHS.forEach((m, i) => {
+      const cx = M.l + band * i + band / 2;
+      el('path', { d: barPath(cx - BW - GAP / 2, Y(REVENUE[i]), BW, Y(0) - Y(REVENUE[i]), 4, 'up'), fill: 'var(--s1)' }, svg);
+      el('path', { d: barPath(cx + GAP / 2,      Y(COST[i]),    BW, Y(0) - Y(COST[i]),    4, 'up'), fill: 'var(--s2)' }, svg);
+      if (i % every === 0) {
+        text(svg, cx, M.t + ih + 22, m, { size: narrow ? 11 : 12, fill: 'var(--text-secondary)' });
+      }
+    });
+
+    const lineD = NET.map((v, i) => `${i ? 'L' : 'M'}${(M.l + band * i + band / 2).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+    el('path', { d: lineD, fill: 'none', stroke: 'var(--s3)', 'stroke-width': 2,
+                 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+                 'vector-effect': 'non-scaling-stroke' }, svg);
+    NET.forEach((v, i) => {
+      el('circle', { cx: M.l + band * i + band / 2, cy: Y(v), r: narrow ? 3 : 4,
+                     fill: 'var(--s3)', stroke: 'var(--surface)', 'stroke-width': 2,
+                     'vector-effect': 'non-scaling-stroke' }, svg);
+    });
+    if (!narrow) {
+      text(svg, M.l + band * 11 + band / 2 + 12, Y(NET[11]) + 4, '+87',
+           { anchor: 'start', size: 12, weight: 600, fill: 'var(--text-primary)', tabular: true });
+    }
+
+    const cross = el('line', { x1: 0, x2: 0, y1: M.t, y2: M.t + ih, stroke: 'var(--axis)',
+                               'stroke-width': 1, opacity: 0, 'vector-effect': 'non-scaling-stroke' }, svg);
+    MONTHS.forEach((m, i) => {
+      const cx = M.l + band * i + band / 2;
+      const hit = el('rect', { x: cx - band / 2, y: M.t, width: band, height: ih, fill: 'transparent' }, svg);
+      const show = e => {
+        cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('opacity', 1);
+        showTip(e, `<div class="t-title">${m} 2025</div>` +
+          row('var(--s1)', 'Revenue', fmtK(REVENUE[i])) +
+          row('var(--s2)', 'Total cost', fmtK(COST[i])) +
+          row('var(--s3)', 'Net profit', fmtSigned(NET[i])));
+      };
+      hit.addEventListener('pointerenter', show);
+      hit.addEventListener('pointerdown', show);
+      hit.addEventListener('pointerleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+    });
+  }
+);
+
+/* ---------- 3 · margin ladder, percent axis ---------- */
+responsiveChart(
+  document.getElementById('chartMargin'),
+  w => (isNarrow(w) ? 300 : 330),
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    const M = { t: 22, r: narrow ? 14 : 20, b: 38, l: narrow ? 38 : 42 };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    const lo = -10, hi = 50;
+    const Y = v => M.t + ih - ((v - lo) / (hi - lo)) * ih;
+    const X = i => M.l + (i * iw) / (MONTHS.length - 1);
+
+    for (let v = lo; v <= hi; v += 10) {
+      el('line', { x1: M.l, x2: W - M.r, y1: Y(v), y2: Y(v),
+                   stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      text(svg, M.l - 8, Y(v) + 4, v + '%', { anchor: 'end', size: narrow ? 11 : 12, tabular: true });
+    }
+    const every = Math.max(1, Math.ceil(30 / (iw / (MONTHS.length - 1))));
+    MONTHS.forEach((m, i) => {
+      if (i % every) return;
+      text(svg, X(i), M.t + ih + 22, m, { size: narrow ? 11 : 12, fill: 'var(--text-secondary)' });
+    });
+
+    const SERIES = [
+      { name: 'Gross margin',     data: GM, color: 'var(--s1)' },
+      { name: 'Operating margin', data: OM, color: 'var(--s2)' },
+      { name: 'Net margin',       data: NM, color: 'var(--s3)' },
+    ];
+    SERIES.forEach(s => {
+      const d = s.data.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+      el('path', { d, fill: 'none', stroke: s.color, 'stroke-width': 2,
+                   'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      el('circle', { cx: X(11), cy: Y(s.data[11]), r: 4, fill: s.color,
+                     stroke: 'var(--surface)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' }, svg);
+    });
+
+    const cross = el('line', { x1: 0, x2: 0, y1: M.t, y2: M.t + ih, stroke: 'var(--axis)',
+                               'stroke-width': 1, opacity: 0, 'vector-effect': 'non-scaling-stroke' }, svg);
+    const dots = SERIES.map(s => el('circle', { r: 5, fill: s.color, stroke: 'var(--surface)',
+                                                'stroke-width': 2, opacity: 0,
+                                                'vector-effect': 'non-scaling-stroke' }, svg));
+    const band = iw / (MONTHS.length - 1);
+    MONTHS.forEach((m, i) => {
+      const hit = el('rect', { x: X(i) - band / 2, y: M.t, width: band, height: ih, fill: 'transparent' }, svg);
+      const show = e => {
+        cross.setAttribute('x1', X(i)); cross.setAttribute('x2', X(i)); cross.setAttribute('opacity', 1);
+        dots.forEach((d, k) => { d.setAttribute('cx', X(i)); d.setAttribute('cy', Y(SERIES[k].data[i])); d.setAttribute('opacity', 1); });
+        showTip(e, `<div class="t-title">${m} 2025</div>` +
+          SERIES.map(s => row(s.color, s.name, s.data[i].toFixed(1) + '%')).join(''));
+      };
+      hit.addEventListener('pointerenter', show);
+      hit.addEventListener('pointerdown', show);
+      hit.addEventListener('pointerleave', () => {
+        cross.setAttribute('opacity', 0);
+        dots.forEach(d => d.setAttribute('opacity', 0));
+        hideTip();
+      });
+    });
+  }
+);
+
+/* ---------- 4 · horizontal bars, single hue (nominal categories) ---------- */
+responsiveChart(
+  document.getElementById('chartOpex'),
+  () => 330,
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    /* The label gutter is a share of the width, not a fixed 132px, or it
+       eats a third of a phone screen. */
+    const M = { t: 8, r: narrow ? 46 : 66, b: 8, l: Math.min(132, Math.round(W * 0.30)) };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    const max = Math.max(...OPEX.map(o => o.value));
+    const band = ih / OPEX.length, BH = Math.min(24, band - 12);
+
+    OPEX.forEach((o, i) => {
+      const y = M.t + band * i + (band - BH) / 2;
+      const w = (o.value / max) * iw;
+      el('path', { d: barPathRight(M.l, y, Math.max(w, 2), BH, 4), fill: 'var(--s1)' }, svg);
+      text(svg, M.l - 10, y + BH / 2 + 4, narrow ? (o.abbr || o.label) : o.label,
+           { anchor: 'end', size: narrow ? 11 : 12, fill: 'var(--text-secondary)' });
+      text(svg, M.l + w + 9, y + BH / 2 + 4, fmtK(o.value),
+           { anchor: 'start', size: narrow ? 11 : 12, weight: 600, fill: 'var(--text-primary)', tabular: true });
+
+      const hit = el('rect', { x: 0, y: M.t + band * i, width: W, height: band, fill: 'transparent' }, svg);
+      bindTip(hit, () => `<div class="t-title">${o.label}</div>` +
+        row('var(--s1)', 'Spend', 'RM ' + fmtK(o.value) + 'k') +
+        row(null, 'Of revenue', o.pct.toFixed(1) + '%') +
+        row(null, 'Of total opex', (o.value / 2148 * 100).toFixed(1) + '%'));
+    });
+  }
+);
+
+/* ---------- 5 · diverging bars, true zero baseline ---------- */
+responsiveChart(
+  document.getElementById('chartPvm'),
+  w => (isNarrow(w) ? 190 : 220),
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    const M = { t: 16, r: narrow ? 52 : 90, b: 34, l: Math.min(130, Math.round(W * 0.22)) };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    const lo = -200, hi = 600;
+    const X = v => M.l + ((v - lo) / (hi - lo)) * iw;
+
+    for (let v = lo; v <= hi; v += (narrow ? 400 : 200)) {
+      el('line', { x1: X(v), x2: X(v), y1: M.t, y2: M.t + ih,
+                   stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      text(svg, X(v), M.t + ih + 22, fmtSigned(v), { size: narrow ? 11 : 12, tabular: true });
+    }
+
+    const band = ih / PVM.length, BH = Math.min(24, band - 14);
+    PVM.forEach((s, i) => {
+      const y = M.t + band * i + (band - BH) / 2;
+      const x0 = X(0), x1 = X(s.value), pos = s.value >= 0;
+      const len = Math.max(Math.abs(x1 - x0), 2);
+      el('path', { d: pos ? barPathRight(x0, y, len, BH, 4) : barPathLeft(x0, y, len, BH, 4),
+                   fill: pos ? 'var(--good)' : 'var(--critical)' }, svg);
+      text(svg, M.l - 12, y + BH / 2 + 4, s.label,
+           { anchor: 'end', size: narrow ? 12 : 13, weight: 600, fill: 'var(--text-primary)' });
+      text(svg, pos ? x1 + 9 : x1 - 9, y + BH / 2 + 4, fmtSigned(s.value),
+           { anchor: pos ? 'start' : 'end', size: narrow ? 11 : 12, weight: 600,
+             fill: 'var(--text-primary)', tabular: true });
+
+      const hit = el('rect', { x: 0, y: M.t + band * i, width: W, height: band, fill: 'transparent' }, svg);
+      bindTip(hit, () => `<div class="t-title">${s.label}</div>` +
+        row(pos ? 'var(--good)' : 'var(--critical)', 'Effect on revenue',
+            (s.value > 0 ? '+' : '−') + 'RM ' + fmtK(Math.abs(s.value)) + 'k') +
+        row(null, 'Of the RM 826k growth', (s.value / 826 * 100).toFixed(0) + '%') +
+        `<div class="t-row" style="margin-top:6px"><span class="k" style="white-space:normal">${s.note}</span></div>`);
+    });
+  }
+);
+
+/* ---------- sparklines ---------- */
+function sparkline(svg, series) {
+  const W = 200, H = 40, pad = 3;
+  const min = Math.min(...series), max = Math.max(...series);
+  const span = (max - min) || 1;
+  const X = i => pad + (i * (W - pad * 2)) / (series.length - 1);
+  const Y = v => H - pad - ((v - min) / span) * (H - pad * 2);
+  const d = series.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  el('path', { d: `${d} L${X(series.length - 1)},${H} L${X(0)},${H} Z`, fill: 'var(--s1)', 'fill-opacity': 0.10 }, svg);
+  el('path', { d, fill: 'none', stroke: 'var(--s1)', 'stroke-width': 2,
+               'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' }, svg);
+  el('circle', { cx: X(series.length - 1), cy: Y(series.at(-1)), r: 4.5,
+                 fill: 'var(--s1)', stroke: 'var(--surface)', 'stroke-width': 2,
+                 'vector-effect': 'non-scaling-stroke' }, svg);
+}
+const SPARKS = { rev: REVENUE, gm: GM, opexratio: OPEXR, nm: NM };
+document.querySelectorAll('.tile').forEach(t => sparkline(t.querySelector('.spark'), SPARKS[t.dataset.tile]));
+
+/* ============================================================
+   CONTROLS
+   ============================================================ */
+/* Deep links, so the review board can embed a fixed theme / open table: ?theme=dark&table=1 */
+const Q = new URLSearchParams(location.search);
+if (Q.get('theme')) document.documentElement.setAttribute('data-theme', Q.get('theme'));
+
+const themeBtn = document.getElementById('themeBtn');
+themeBtn.addEventListener('click', () => {
+  const dark = getComputedStyle(document.body).getPropertyValue('--page').trim() === '#0d0d0d';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+
+const tableBtn = document.getElementById('tableBtn');
+const statement = document.getElementById('statement');
+tableBtn.addEventListener('click', () => {
+  const open = statement.classList.toggle('hidden') === false;
+  tableBtn.setAttribute('aria-expanded', String(open));
+  tableBtn.textContent = open ? 'Hide table' : 'View as table';
+  if (open) statement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+if (Q.get('table') === '1') {
+  statement.classList.remove('hidden');
+  tableBtn.setAttribute('aria-expanded', 'true');
+  tableBtn.textContent = 'Hide table';
+}
+
+document.querySelectorAll('.seg').forEach(seg => {
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  });
+});
+</script>
+</body>
+</html>

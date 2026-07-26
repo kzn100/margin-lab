@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your analyses · Margin Lab</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   USER DASHBOARD  ·  /dashboard
+   Tokens, shell, tiles, table and controls come from tokens.css.
+   ============================================================ */
+.tiles-3 { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 900px) { .tiles-3 { grid-template-columns: 1fr; } }
+.sec { margin-top: 16px; }
+.sec > .toolbar { margin-bottom: 18px; }
+.skel-row { height: 17px; }
+.hdr .who { display: flex; align-items: center; gap: 9px; margin-left: 8px; padding-left: 14px; border-left: 1px solid var(--border); }
+.hdr .who span { font-size: 13px; font-weight: 600; }
+@media (max-width: 700px) { .hdr .who span { display: none; } }
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <rect x="1" y="1" width="20" height="20" rx="5" fill="var(--accent)"/>
+        <path d="M6 14.5 L9.5 10 L12.5 12.5 L16 6.5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Margin Lab
+    </a>
+    <nav>
+      <a href="#" aria-current="page">Dashboard</a>
+      <a class="opt" href="#">Articles</a>
+      <a class="opt" href="#">Log out</a>
+      <span class="who"><span class="avatar" aria-hidden="true">NA</span><span>Nurul Aziz</span></span>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch theme" title="Switch theme" style="margin-left:8px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3.1"/>
+          <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2 3.1 3.1"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- Reference-only. Delete this block when porting to the app. -->
+<div class="refbar">
+  <strong>REFERENCE ONLY</strong>
+  <span>State</span>
+  <div class="seg" id="stateSeg" role="group" aria-label="State">
+    <button aria-pressed="true"  data-state="default">Populated</button>
+    <button aria-pressed="false" data-state="loading">Loading</button>
+    <button aria-pressed="false" data-state="empty">Empty</button>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section class="pagehead" style="display:flex;align-items:flex-end;gap:24px;flex-wrap:wrap">
+    <div>
+      <h1>Your analyses</h1>
+      <p class="meta" id="headMeta">6 uploads. Most recent 26 Jul 2026.</p>
+    </div>
+    <a class="btn btn-primary" href="#" style="margin-left:auto">New analysis</a>
+  </section>
+
+  <!-- ---------------- populated ---------------- -->
+  <div id="viewData">
+
+    <section class="tiles tiles-3">
+      <figure class="card tile">
+        <span class="lbl">Analyses run</span>
+        <div class="val">6</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          2 <span class="per">this year</span>
+        </span>
+      </figure>
+
+      <figure class="card tile">
+        <span class="lbl">Latest net margin</span>
+        <div class="val">4.0%</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          0.9pp <span class="per">vs previous upload</span>
+        </span>
+        <svg class="spark" viewBox="0 0 200 40" aria-hidden="true"></svg>
+      </figure>
+
+      <figure class="card tile">
+        <span class="lbl">Margin since first upload</span>
+        <div class="val">+4.2pp</div>
+        <span class="delta up">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 9V2M2.3 5.2 5.5 2l3.2 3.2"/></svg>
+          <span class="per">from -0.2% in Jul 2025</span>
+        </span>
+      </figure>
+    </section>
+
+    <section class="sec card">
+      <div class="toolbar">
+        <label class="search grow">
+          <span class="vh">Search your analyses</span>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="m10.4 10.4 3.1 3.1"/></svg>
+          <input class="input" type="search" placeholder="Search by period or file name">
+        </label>
+        <select class="ctrl" aria-label="P&amp;L type">
+          <option>All types</option>
+          <option>Full year</option>
+          <option>Part year</option>
+        </select>
+        <select class="ctrl" aria-label="Status">
+          <option>All statuses</option>
+          <option>Ready</option>
+          <option>Processing</option>
+          <option>Failed</option>
+        </select>
+        <select class="ctrl" aria-label="Sort">
+          <option>Newest first</option>
+          <option>Oldest first</option>
+        </select>
+      </div>
+
+      <div class="dtable-wrap">
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th scope="col"><button type="button">Uploaded<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5V2.5M3.2 5.3 6 2.5l2.8 2.8"/></svg></button></th>
+              <th scope="col">Period</th>
+              <th scope="col">Type</th>
+              <th scope="col" class="num"><button type="button">Net margin<svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5V2.5M3.2 5.3 6 2.5l2.8 2.8"/></svg></button></th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="vh">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <div class="pager" style="margin-top:16px">
+        <span>Showing 6 of 6</span>
+        <span class="spacer"></span>
+        <button type="button" disabled>Previous</button>
+        <button type="button" disabled>Next</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ---------------- loading ---------------- -->
+  <div id="viewLoading" class="hidden">
+    <section class="tiles tiles-3">
+      <figure class="card tile"><div class="skeleton" style="height:12px;width:40%"></div><div class="skeleton" style="height:28px;width:55%;margin-top:10px"></div></figure>
+      <figure class="card tile"><div class="skeleton" style="height:12px;width:52%"></div><div class="skeleton" style="height:28px;width:42%;margin-top:10px"></div><div class="skeleton" style="height:34px;margin-top:16px"></div></figure>
+      <figure class="card tile"><div class="skeleton" style="height:12px;width:60%"></div><div class="skeleton" style="height:28px;width:38%;margin-top:10px"></div></figure>
+    </section>
+    <section class="sec card">
+      <div class="toolbar" style="margin-bottom:22px">
+        <div class="skeleton grow" style="height:38px"></div>
+        <div class="skeleton" style="height:38px;width:110px"></div>
+        <div class="skeleton" style="height:38px;width:126px"></div>
+      </div>
+      <div class="skeleton" style="height:11px;width:100%;margin-bottom:20px"></div>
+      <div id="skelRows"></div>
+    </section>
+  </div>
+
+  <!-- ---------------- empty ---------------- -->
+  <div id="viewEmpty" class="hidden">
+    <section class="sec card">
+      <div class="empty">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8Z"/><path d="M14 2.5V8h5.5"/><path d="M8.5 17V12.5M12 17v-7M15.5 17v-3"/>
+        </svg>
+        <h3>No analyses yet</h3>
+        <p>Upload twelve months of P&amp;L in our template and your margin bridge, cost breakdown and revenue split appear here.</p>
+        <a class="btn btn-primary" href="#" style="margin-top:6px">Run your first analysis</a>
+      </div>
+    </section>
+  </div>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Margin Lab</span>
+    <a href="#">Articles</a>
+    <a href="#">Privacy</a>
+    <a href="#">Contact</a>
+    <span style="margin-left:auto">Sample data for design reference.</span>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   DATA  ·  sample
+   ============================================================ */
+const ANALYSES = [
+  { id:'a6', uploaded:'26 Jul 2026', period:'FY2025 (Jan to Dec)', type:'Full year', margin: 4.0, status:'ready' },
+  { id:'a5', uploaded:'12 Apr 2026', period:'Q1 2026 (Jan to Mar)', type:'Part year', margin: 3.1, status:'ready' },
+  { id:'a4', uploaded:'03 Feb 2026', period:'FY2025 revised',       type:'Full year', margin: null, status:'processing' },
+  { id:'a3', uploaded:'14 Oct 2025', period:'H1 2025 (Jan to Jun)', type:'Part year', margin: 1.8, status:'ready' },
+  { id:'a2', uploaded:'08 Jul 2025', period:'FY2024 (Jan to Dec)',  type:'Full year', margin:-0.2, status:'ready' },
+  { id:'a1', uploaded:'21 Mar 2025', period:'Q1 2025 (Jan to Mar)', type:'Part year', margin: null, status:'failed' },
+];
+
+/* Status is state, so it wears the reserved status palette and always
+   ships the word beside the dot. Never the dot alone. */
+const STATUS = {
+  ready:      { cls:'badge-good',     label:'Ready' },
+  processing: { cls:'badge-neutral',  label:'Processing' },
+  failed:     { cls:'badge-critical', label:'Failed' },
+};
+
+const rows = document.getElementById('rows');
+rows.innerHTML = ANALYSES.map(a => {
+  const s = STATUS[a.status];
+  const margin = a.margin === null
+    ? '<span class="muted">n/a</span>'
+    : a.margin.toFixed(1) + '%';
+  const action = a.status === 'ready'
+    ? '<a class="btn btn-quiet" href="#">View</a>'
+    : a.status === 'failed'
+      ? '<a class="btn btn-quiet" href="#">Re-upload</a>'
+      : '<span class="muted" style="font-size:13px">Working</span>';
+  return `<tr>
+    <td class="strong">${a.uploaded}</td>
+    <td>${a.status === 'ready' ? `<a class="rowlink" href="#">${a.period}</a>` : `<span class="muted">${a.period}</span>`}</td>
+    <td class="muted">${a.type}</td>
+    <td class="num">${margin}</td>
+    <td><span class="badge ${s.cls}">${s.label}</span></td>
+    <td>${action}</td>
+  </tr>`;
+}).join('');
+
+/* sparkline: net margin across the four completed analyses, oldest first */
+const MARGIN_HISTORY = [-0.2, 1.8, 3.1, 4.0];
+(function spark() {
+  const svg = document.querySelector('.spark');
+  const NS = 'http://www.w3.org/2000/svg';
+  const W = 200, H = 40, pad = 3;
+  const min = Math.min(...MARGIN_HISTORY), max = Math.max(...MARGIN_HISTORY);
+  const span = (max - min) || 1;
+  const X = i => pad + (i * (W - pad * 2)) / (MARGIN_HISTORY.length - 1);
+  const Y = v => H - pad - ((v - min) / span) * (H - pad * 2);
+  const d = MARGIN_HISTORY.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const add = (tag, attrs) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    svg.appendChild(n);
+  };
+  add('path', { d: `${d} L${X(MARGIN_HISTORY.length-1)},${H} L${X(0)},${H} Z`, fill: 'var(--s1)', 'fill-opacity': 0.10 });
+  add('path', { d, fill: 'none', stroke: 'var(--s1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round', 'vector-effect': 'non-scaling-stroke' });
+  add('circle', { cx: X(MARGIN_HISTORY.length - 1), cy: Y(MARGIN_HISTORY.at(-1)), r: 4.5,
+                  fill: 'var(--s1)', stroke: 'var(--surface)', 'stroke-width': 2, 'vector-effect': 'non-scaling-stroke' });
+})();
+
+/* skeleton rows match the shape of the real rows, not a generic block */
+document.getElementById('skelRows').innerHTML = Array.from({ length: 6 }, () => `
+  <div style="display:grid;grid-template-columns:1.1fr 1.7fr 1fr .8fr .9fr .6fr;gap:14px;padding:13px 0;border-bottom:1px solid var(--border)">
+    ${Array.from({ length: 6 }, () => '<div class="skeleton skel-row"></div>').join('')}
+  </div>`).join('');
+
+/* ---------- reference state switcher ---------- */
+const views = { default:'viewData', loading:'viewLoading', empty:'viewEmpty' };
+const META = {
+  default: '6 uploads. Most recent 26 Jul 2026.',
+  loading: 'Loading your analyses',
+  empty:   'Nothing uploaded yet.',
+};
+function setState(state) {
+  if (!views[state]) state = 'default';
+  document.getElementById('stateSeg').querySelectorAll('button').forEach(x =>
+    x.setAttribute('aria-pressed', String(x.dataset.state === state)));
+  for (const k in views) document.getElementById(views[k]).classList.toggle('hidden', k !== state);
+  document.getElementById('headMeta').textContent = META[state];
+}
+document.getElementById('stateSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  setState(b.dataset.state);
+});
+
+/* Deep links, so the review board can embed a specific state:
+   ?state=empty   ?theme=dark   ?ref=0 (hide the reference toolbar) */
+const Q = new URLSearchParams(location.search);
+/* Hide, never remove: the state buttons live inside .refbar and setState reads them. */
+if (Q.get('ref') === '0') document.querySelector('.refbar')?.classList.add('hidden');
+if (Q.get('theme')) document.documentElement.setAttribute('data-theme', Q.get('theme'));
+setState(Q.get('state') || 'default');
+
+/* ---------- theme toggle ---------- */
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const dark = getComputedStyle(document.body).getPropertyValue('--page').trim() === '#0d0d0d';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>

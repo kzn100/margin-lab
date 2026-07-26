@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design board · Margin Lab</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   DESIGN BOARD  ·  every screen on one canvas
+   Frames embed the REAL pages, so this board cannot drift from
+   the implementation. Change a page, reload here, it is current.
+   ============================================================ */
+html, body { height: 100%; overflow: hidden; }
+
+/* ---------- top bar ---------- */
+.bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 50; height: 56px;
+  display: flex; align-items: center; gap: 10px; padding: 0 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.bar .title { display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: -0.01em; }
+.bar .title small { font-weight: 400; font-size: 12px; color: var(--text-muted); letter-spacing: 0; }
+.bar .grp { display: flex; align-items: center; gap: 6px; }
+.bar .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
+.bar .spacer { margin-left: auto; }
+.zoomval { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-secondary); min-width: 44px; text-align: center; }
+.toggle {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  padding: 7px 11px; border: 1px solid var(--border); border-radius: var(--r-ctrl);
+  background: transparent; white-space: nowrap;
+}
+.toggle:hover { color: var(--text-primary); background: var(--surface-2); }
+.toggle[aria-pressed="true"] { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: var(--accent-wash); }
+@media (max-width: 900px) { .bar .hideable { display: none; } }
+
+/* ---------- viewport + canvas ---------- */
+.viewport {
+  position: fixed; inset: 56px 0 0 0; overflow: hidden;
+  cursor: grab; background-color: var(--page);
+  background-image: radial-gradient(circle, var(--grid) 1px, transparent 1px);
+  background-repeat: repeat;
+  touch-action: none;
+}
+.viewport.grabbing { cursor: grabbing; }
+.canvas { transform-origin: 0 0; width: max-content; padding: 64px; }
+
+.group { margin-bottom: 88px; }
+.group > h2 {
+  font-size: 30px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 6px;
+}
+.group > p { font-size: 15px; color: var(--text-secondary); margin-bottom: 28px; max-width: 78ch; }
+.row { display: flex; align-items: flex-start; gap: 56px; }
+
+/* ---------- frame ---------- */
+.frame { display: block; }
+.frame figcaption {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; padding: 0 2px;
+}
+.frame .fname { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+.frame .fmeta { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.frame .fopen {
+  margin-left: auto; font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  text-decoration: none; padding: 2px 7px; border-radius: 4px; border: 1px solid transparent;
+}
+.frame .fopen:hover { color: var(--accent); border-color: var(--border); }
+.frame .fnote { font-size: 13px; color: var(--text-secondary); margin-top: 10px; max-width: 60ch; padding: 0 2px; }
+
+.artboard {
+  position: relative; overflow: hidden; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 4px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.16);
+}
+.artboard iframe { display: block; border: 0; width: 100%; height: 100%; }
+.locked .artboard iframe { pointer-events: none; }
+.artboard .ph {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  background: var(--surface-2); color: var(--text-muted); font-size: 13px;
+}
+
+/* mobile frames get a device gutter so the collapse is obvious at a glance */
+.frame.mobile .artboard { border-radius: 18px; border-width: 6px; border-color: var(--axis); }
+
+.legend-card { max-width: 460px; }
+.legend-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.legend-card dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 13px; margin: 0; }
+.legend-card dt { color: var(--text-muted); white-space: nowrap; }
+.legend-card dd { margin: 0; color: var(--text-secondary); }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.sw { width: 34px; height: 34px; border-radius: 6px; border: 1px solid var(--border); }
+</style>
+</head>
+<body class="locked">
+
+<div class="bar">
+  <span class="title">
+    <svg width="20" height="20" viewBox="0 0 22 22" aria-hidden="true">
+      <rect x="1" y="1" width="20" height="20" rx="5" fill="var(--accent)"/>
+      <path d="M6 14.5 L9.5 10 L12.5 12.5 L16 6.5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    Margin Lab <small class="hideable">design board</small>
+  </span>
+
+  <span class="sep hideable"></span>
+
+  <span class="grp">
+    <button class="icon-btn" id="zoomOut" aria-label="Zoom out" title="Zoom out">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3.5 8h9"/></svg>
+    </button>
+    <span class="zoomval" id="zoomVal">25%</span>
+    <button class="icon-btn" id="zoomIn" aria-label="Zoom in" title="Zoom in">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3.5v9M3.5 8h9"/></svg>
+    </button>
+  </span>
+  <button class="toggle" id="fitBtn">Fit</button>
+  <button class="toggle hideable" id="oneBtn">100%</button>
+
+  <span class="sep"></span>
+
+  <button class="toggle" id="interactBtn" aria-pressed="false" title="Let clicks reach the frames. Turn off to drag the canvas.">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.4 2.6 12 7.1l-3.5 1.3L7.1 12 3.4 2.6Z"/></svg>
+    Interactive
+  </button>
+
+  <span class="spacer"></span>
+
+  <button class="toggle" id="themeBtn" aria-pressed="true">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+      <circle cx="8" cy="8" r="3.1"/><path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2 3.1 3.1"/>
+    </svg>
+    <span id="themeLabel">Dark</span>
+  </button>
+</div>
+
+<div class="viewport" id="viewport">
+  <div class="canvas" id="canvas"></div>
+</div>
+
+<script>
+/* ============================================================
+   FRAME MANIFEST
+   Every frame points at a real page. `h` is a starting height:
+   pages that fill the viewport (auth) need a sane 100dvh value,
+   and everything grows to its real content height once loaded.
+   `maxH` clips very tall pages so one frame cannot dominate.
+   ============================================================ */
+const GROUPS = [
+  {
+    title: 'Auth',
+    note: 'One split-screen shell. Form on the left, evidence on the right. Every state is reachable, because a submitting state that only spins the button is not finished.',
+    frames: [
+      { name: '/login',    meta: 'Default',    file: 'auth.html', q: 'route=login',                w: 1280, h: 900 },
+      { name: '/login',    meta: 'Error',      file: 'auth.html', q: 'route=login&state=error',    w: 1280, h: 900,
+        note: 'Page banner, per-field ring, and an inline message under each control. Three channels, never colour alone.' },
+      { name: '/register', meta: 'Default',    file: 'auth.html', q: 'route=register',             w: 1280, h: 1240,
+        note: 'Dropzone, password meter, and the P&L type choice. The conversion page, so it carries the most state.' },
+      { name: '/register', meta: 'Submitting', file: 'auth.html', q: 'route=register&state=submitting', w: 1280, h: 1240 },
+    ],
+  },
+  {
+    title: 'Analysis',
+    note: 'The product surface. Five chart forms, each picked by the question the reader is asking, all on one validated palette.',
+    frames: [
+      { name: '/results/[id]', meta: 'Charts', file: 'pnl-results.html', q: '',        w: 1360, h: 2901,
+        note: 'Waterfall bridge, monthly columns with a net profit line on ONE axis, the margin ladder in its own percent chart, opex as single-hue bars, and price/volume/mix on a true zero.' },
+      { name: '/results/[id]', meta: 'Table view open', file: 'pnl-results.html', q: 'table=1', w: 1360, h: 3794,
+        note: 'Every chart has a reachable table. This is also the relief channel for the three light-mode hues that sit under 3:1.' },
+    ],
+  },
+  {
+    title: 'Dashboard',
+    note: 'Analysis history. All three states, because the skeleton and the empty state ship at the same time as the happy path.',
+    frames: [
+      { name: '/dashboard', meta: 'Populated', file: 'dashboard.html', q: 'state=default', w: 1360, h: 1140 },
+      { name: '/dashboard', meta: 'Loading',   file: 'dashboard.html', q: 'state=loading', w: 1360, h: 1140,
+        note: 'The skeleton mirrors the real column rhythm. No spinner.' },
+      { name: '/dashboard', meta: 'Empty',     file: 'dashboard.html', q: 'state=empty',   w: 1360, h: 820,
+        note: 'One sentence and the action that populates it.' },
+    ],
+  },
+  {
+    title: 'Admin',
+    note: 'Leads feed the marketing segment. Selecting rows and pressing "Send to marketing" carries the segment across.',
+    frames: [
+      { name: '/admin', meta: 'Leads and usage', file: 'admin.html', q: 'route=leads', w: 1440, h: 1560,
+        note: 'Usage tiles, a single-series weekly chart, and the leads table with multi-select and an indeterminate select-all.' },
+      { name: '/admin/marketing', meta: 'Email', file: 'admin.html', q: 'route=marketing&tab=email', w: 1440, h: 1220,
+        note: 'Live preview with sample personalisation resolved. Never a send button without showing what gets sent.' },
+      { name: '/admin/marketing', meta: 'WhatsApp, no provider', file: 'admin.html', q: 'route=marketing&tab=wa', w: 1440, h: 1220,
+        note: 'Unconfigured integrations get an explicit disabled state with the reason and the fix, not a hidden tab.' },
+      { name: '/admin', meta: 'No access', file: 'admin.html', q: 'state=forbidden', w: 1440, h: 820,
+        note: 'The heading changes and the Marketing link hides. A 403 must not leak the page it guards.' },
+    ],
+  },
+  {
+    title: 'Content',
+    note: 'RGM 101 articles. Charts inside an article use the identical marks and tokens as the product.',
+    frames: [
+      { name: '/articles/[slug]', meta: 'Full read', file: 'article.html', q: '', w: 1280, h: 5274,
+        note: 'Prose at a 68ch measure, sticky table of contents driven by IntersectionObserver, and a native scroll-driven progress rail.' },
+    ],
+  },
+  {
+    title: 'Mobile',
+    note: 'Every multi-column block declares its collapse. These frames scroll inside the device, so drag with Interactive on.',
+    mobile: true,
+    frames: [
+      { name: '/results/[id]', meta: '390', file: 'pnl-results.html', q: '',                 w: 390, h: 1100, maxH: 1100 },
+      { name: '/register',     meta: '390', file: 'auth.html',        q: 'route=register',   w: 390, h: 1100, maxH: 1100 },
+      { name: '/dashboard',    meta: '390', file: 'dashboard.html',   q: 'state=default',    w: 390, h: 1100, maxH: 1100 },
+      { name: '/articles/[slug]', meta: '390', file: 'article.html',  q: '',                 w: 390, h: 1100, maxH: 1100 },
+    ],
+  },
+];
+
+/* ============================================================
+   BUILD
+   ============================================================ */
+const canvas = document.getElementById('canvas');
+let theme = 'dark';
+
+function frameSrc(f) {
+  const parts = ['ref=0', 'theme=' + theme];
+  if (f.q) parts.unshift(f.q);
+  return `${f.file}?${parts.join('&')}`;
+}
+
+function build() {
+  canvas.innerHTML = '';
+  GROUPS.forEach(g => {
+    const sec = document.createElement('section');
+    sec.className = 'group';
+    sec.innerHTML = `<h2>${g.title}</h2><p>${g.note}</p>`;
+    const row = document.createElement('div');
+    row.className = 'row';
+    g.frames.forEach(f => {
+      const h = Math.min(f.h, f.maxH || Infinity);
+      const fig = document.createElement('figure');
+      fig.className = 'frame' + (g.mobile ? ' mobile' : '');
+      fig.innerHTML = `
+        <figcaption>
+          <span class="fname">${f.name}</span>
+          <span class="fmeta">${f.meta} · ${f.w}</span>
+          <a class="fopen" href="${frameSrc(f)}" target="_blank" rel="noopener">Open</a>
+        </figcaption>
+        <div class="artboard" style="width:${f.w}px;height:${h}px">
+          <div class="ph">Loading ${f.file}</div>
+        </div>
+        ${f.note ? `<p class="fnote">${f.note}</p>` : ''}`;
+      row.appendChild(fig);
+
+      const board = fig.querySelector('.artboard');
+      const iframe = document.createElement('iframe');
+      iframe.loading = 'lazy';
+      iframe.title = `${f.name} ${f.meta}`;
+      iframe.src = frameSrc(f);
+      iframe.addEventListener('load', () => {
+        board.querySelector('.ph')?.remove();
+        /* Grow the artboard to the page's real height, so the board can
+           never disagree with the implementation. Capped by maxH. */
+        try {
+          const d = iframe.contentDocument;
+          const real = Math.max(d.body.scrollHeight, d.documentElement.scrollHeight);
+          const target = Math.min(Math.max(real, f.h), f.maxH || Infinity);
+          board.style.height = target + 'px';
+        } catch (e) { /* cross-origin, keep the declared height */ }
+      });
+      board.appendChild(iframe);
+    });
+    sec.appendChild(row);
+    canvas.appendChild(sec);
+  });
+
+  const legend = document.createElement('section');
+  legend.className = 'group';
+  legend.innerHTML = `
+    <h2>How to read this board</h2>
+    <div class="row">
+      <div class="card legend-card">
+        <h3>Controls</h3>
+        <dl>
+          <dt>Drag</dt><dd>Pan the canvas</dd>
+          <dt>Wheel</dt><dd>Pan vertically, shift for horizontal</dd>
+          <dt>Ctrl or ⌘ + wheel</dt><dd>Zoom at the pointer</dd>
+          <dt>Fit</dt><dd>Frame everything on screen</dd>
+          <dt>Interactive</dt><dd>Send clicks into the frames. Turn it off to drag again.</dd>
+          <dt>Open</dt><dd>Load that exact state as its own page</dd>
+        </dl>
+      </div>
+      <div class="card legend-card">
+        <h3>Series palette</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin:0">Fixed order, assigned in sequence, never cycled. Validated in both modes: adjacent CVD ΔE 9.1 light and 8.4 dark, normal-vision 19.6 and 19.3.</p>
+        <div class="swatches">
+          ${[1,2,3,4,5,6,7,8].map(i => `<span class="sw" style="background:var(--s${i})" title="Series ${i}"></span>`).join('')}
+        </div>
+        <h3 style="margin-top:20px">Status, reserved</h3>
+        <p style="font-size:13px;color:var(--text-secondary);margin:0">Never reused as a series colour. Always shipped with a word beside the dot.</p>
+        <div class="swatches">
+          <span class="sw" style="background:var(--good)" title="good"></span>
+          <span class="sw" style="background:var(--warning)" title="warning"></span>
+          <span class="sw" style="background:var(--serious)" title="serious"></span>
+          <span class="sw" style="background:var(--critical)" title="critical"></span>
+        </div>
+      </div>
+    </div>`;
+  canvas.appendChild(legend);
+}
+
+/* ============================================================
+   PAN + ZOOM
+   ============================================================ */
+const viewport = document.getElementById('viewport');
+const zoomVal = document.getElementById('zoomVal');
+let z = 0.25, px = 0, py = 0;
+
+function apply() {
+  canvas.style.transform = `translate(${px}px, ${py}px) scale(${z})`;
+  zoomVal.textContent = Math.round(z * 100) + '%';
+  /* The grid tracks the zoom, but clamped: below ~10px it stops reading as a
+     grid and starts reading as noise. */
+  const step = Math.min(120, Math.max(11, 24 * z));
+  viewport.style.backgroundSize = `${step}px ${step}px`;
+  viewport.style.backgroundPosition = `${px}px ${py}px`;
+}
+function zoomAt(nz, cx, cy) {
+  nz = Math.min(3, Math.max(0.04, nz));
+  px = cx - (cx - px) * (nz / z);
+  py = cy - (cy - py) * (nz / z);
+  z = nz;
+  apply();
+}
+/* Fit to WIDTH, not to both axes. Eighteen full-page frames make the canvas
+   far taller than it is wide, and fitting both lands at an unreadable 2%. */
+function fit() {
+  const w = canvas.scrollWidth, h = canvas.scrollHeight;
+  if (!w || !h) return;
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  z = Math.min((vw / w) * 0.96, 1);
+  px = (vw - w * z) / 2;
+  py = h * z < vh ? (vh - h * z) / 2 : 24;
+  apply();
+}
+
+viewport.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (e.ctrlKey || e.metaKey) {
+    zoomAt(z * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX, e.clientY - 56);
+  } else if (e.shiftKey) {
+    px -= e.deltaY; apply();
+  } else {
+    px -= e.deltaX; py -= e.deltaY; apply();
+  }
+}, { passive: false });
+
+let dragging = false, sx = 0, sy = 0;
+viewport.addEventListener('pointerdown', e => {
+  if (document.body.classList.contains('locked') === false && e.target.closest('.artboard')) return;
+  dragging = true; sx = e.clientX - px; sy = e.clientY - py;
+  viewport.classList.add('grabbing');
+  viewport.setPointerCapture(e.pointerId);
+});
+viewport.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  px = e.clientX - sx; py = e.clientY - sy; apply();
+});
+['pointerup', 'pointercancel'].forEach(t => viewport.addEventListener(t, e => {
+  dragging = false; viewport.classList.remove('grabbing');
+  try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+}));
+
+document.getElementById('zoomIn').addEventListener('click',  () => zoomAt(z * 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2));
+document.getElementById('zoomOut').addEventListener('click', () => zoomAt(z / 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2));
+document.getElementById('fitBtn').addEventListener('click', fit);
+document.getElementById('oneBtn').addEventListener('click', () => zoomAt(1, viewport.clientWidth / 2, viewport.clientHeight / 2));
+
+/* ---------- interactive mode ---------- */
+const interactBtn = document.getElementById('interactBtn');
+interactBtn.addEventListener('click', () => {
+  const on = document.body.classList.toggle('locked') === false;
+  interactBtn.setAttribute('aria-pressed', String(on));
+  viewport.style.cursor = on ? 'default' : 'grab';
+});
+
+/* ---------- theme: the board and every frame move together ---------- */
+const themeBtn = document.getElementById('themeBtn');
+const themeLabel = document.getElementById('themeLabel');
+themeBtn.addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', theme);
+  themeLabel.textContent = theme === 'dark' ? 'Dark' : 'Light';
+  themeBtn.setAttribute('aria-pressed', String(theme === 'dark'));
+  document.querySelectorAll('.artboard iframe').forEach(f => {
+    const base = f.src.split('?')[0].split('/').pop();
+    const q = new URLSearchParams(f.src.split('?')[1] || '');
+    q.set('theme', theme);
+    f.src = `${base}?${q}`;
+  });
+  document.querySelectorAll('.fopen').forEach(a => {
+    const u = new URL(a.getAttribute('href'), location.href);
+    u.searchParams.set('theme', theme);
+    a.setAttribute('href', u.pathname.split('/').pop() + u.search);
+  });
+});
+
+/* ---------- keyboard ---------- */
+addEventListener('keydown', e => {
+  if (e.target.matches('input, textarea')) return;
+  if (e.key === '0') { fit(); }
+  if (e.key === '1') { zoomAt(1, viewport.clientWidth / 2, viewport.clientHeight / 2); }
+  if (e.key === '+' || e.key === '=') { zoomAt(z * 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2); }
+  if (e.key === '-') { zoomAt(z / 1.25, viewport.clientWidth / 2, viewport.clientHeight / 2); }
+});
+
+build();
+apply();
+/* refit once the frames have settled into their real heights */
+addEventListener('load', () => setTimeout(fit, 900));
+setTimeout(fit, 2600);
+</script>
+</body>
+</html>

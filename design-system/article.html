@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price, volume and mix · Margin Lab</title>
+<meta name="description" content="Revenue went up 15.9 percent. Until you split it three ways, you do not know whether that is good news.">
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   ARTICLE PAGE  ·  editorial reading layout
+   Everything else comes from tokens.css
+   ============================================================ */
+
+/* reading-progress rail, native scroll-driven, no JS, no scroll listener */
+.progress {
+  position: fixed; inset: 0 auto auto 0; z-index: 50;
+  height: 2px; width: 100%; background: var(--accent);
+  transform: scaleX(0); transform-origin: 0 50%;
+}
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .progress { animation: grow linear both; animation-timeline: scroll(root block); }
+    @keyframes grow { to { transform: scaleX(1); } }
+  }
+}
+
+/* On a phone the header carries brand + primary CTA + theme, and nothing
+   else. "Log in" is secondary here and is reachable from the footer; the
+   free-analysis CTA is the whole point of a marketing article. */
+@media (max-width: 620px) {
+  .hdr nav a:not(.btn) { display: none; }
+}
+
+/* ---------- article header ---------- */
+.ahead { padding: 48px 0 0; }
+.ahead .kicker {
+  display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--accent);
+  background: var(--accent-wash); border-radius: var(--r-ctrl); padding: 5px 10px;
+}
+.ahead h1 {
+  margin-top: 18px; font-size: 40px; line-height: 1.12;
+  font-weight: 600; letter-spacing: -0.025em; max-width: 20ch;
+}
+@media (max-width: 640px) { .ahead h1 { font-size: 30px; } }
+.ahead .dek {
+  margin-top: 16px; font-size: 19px; line-height: 1.55;
+  color: var(--text-secondary); max-width: 58ch;
+}
+
+.byline {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 26px; padding-bottom: 26px; border-bottom: 1px solid var(--border);
+}
+.avatar {
+  width: 36px; height: 36px; border-radius: 999px; flex: none;
+  display: grid; place-items: center;
+  background: var(--accent-wash); color: var(--accent);
+  font-size: 13px; font-weight: 700; letter-spacing: .02em;
+}
+.byline .who { font-size: 14px; font-weight: 600; line-height: 1.3; }
+.byline .who span { display: block; font-weight: 400; font-size: 13px; color: var(--text-muted); }
+.byline .when { margin-left: auto; font-size: 13px; color: var(--text-muted); }
+
+.hero-fig { margin-top: 28px; }
+.hero-fig picture { display: block; }
+.hero-fig img {
+  width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  border-radius: var(--r-card); border: 1px solid var(--border);
+}
+.hero-fig figcaption { margin-top: 10px; font-size: 13px; color: var(--text-muted); }
+
+/* The aspect-ratio MUST match the source the <picture> actually serves at
+   this width, or the browser reserves the wrong box (layout shift) and
+   object-fit crops the square a second time. */
+@media (max-width: 620px) {
+  .hero-fig img { aspect-ratio: 1 / 1; }
+}
+
+/* ---------- body grid: prose + sticky rail ---------- */
+.body-grid {
+  display: grid; grid-template-columns: minmax(0,1fr) 232px;
+  gap: 56px; align-items: start; padding-top: 40px;
+}
+@media (max-width: 940px) {
+  .body-grid { grid-template-columns: 1fr; gap: 0; }
+  .rail { display: none; }
+}
+
+.rail { position: sticky; top: 88px; }
+.rail h2 {
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 12px;
+}
+.rail ol { list-style: none; padding: 0; display: grid; gap: 2px; }
+.rail a {
+  display: block; padding: 6px 0 6px 12px;
+  border-left: 2px solid var(--border);
+  font-size: 13px; line-height: 1.4; color: var(--text-secondary); text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.rail a:hover { color: var(--text-primary); }
+.rail a[aria-current="true"] { color: var(--text-primary); border-left-color: var(--accent); font-weight: 600; }
+
+/* ---------- prose ---------- */
+.prose { max-width: 68ch; font-size: 17px; line-height: 1.7; color: var(--text-secondary); }
+.prose > * + * { margin-top: 22px; }
+.prose h2 {
+  margin-top: 48px; font-size: 24px; line-height: 1.25; font-weight: 600;
+  letter-spacing: -0.015em; color: var(--text-primary); scroll-margin-top: 84px;
+}
+.prose h3 {
+  margin-top: 34px; font-size: 18px; font-weight: 600;
+  color: var(--text-primary); scroll-margin-top: 84px;
+}
+.prose h2 + p, .prose h3 + p { margin-top: 12px; }
+.prose strong { color: var(--text-primary); font-weight: 600; }
+.prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+/* A button inside prose is a button, not a link. Without this, .prose a (0,1,1)
+   outranks .btn-primary (0,1,0) and paints accent text on an accent fill. */
+.prose a.btn { text-decoration: none; }
+.prose a.btn-primary { color: var(--accent-ink); }
+.prose a.btn-ghost { color: var(--text-primary); }
+.prose ul, .prose ol { padding-left: 22px; display: grid; gap: 9px; }
+.prose li::marker { color: var(--text-muted); }
+.prose .lead { font-size: 18px; }
+
+.prose blockquote {
+  border-left: 2px solid var(--accent); padding: 2px 0 2px 20px;
+  font-size: 18px; line-height: 1.6; color: var(--text-primary);
+}
+.prose blockquote cite {
+  display: block; margin-top: 10px; font-size: 13px; font-style: normal;
+  font-weight: 500; color: var(--text-muted);
+}
+
+.callout {
+  border: 1px solid var(--border); border-radius: var(--r-card);
+  background: var(--surface); padding: 18px 20px;
+  font-size: 15px; line-height: 1.6;
+}
+.callout .t {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;
+}
+.callout .t svg { color: var(--accent); flex: none; }
+
+.prose figure { margin: 34px 0; }
+.prose figure img {
+  width: 100%; border-radius: var(--r-card); border: 1px solid var(--border);
+}
+.prose figcaption { margin-top: 10px; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+
+.chart-card { border: 1px solid var(--border); border-radius: var(--r-card); background: var(--surface); padding: 18px 20px; }
+.chart-card h4 { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.chart-card p.sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.chart-card svg.plot { display: block; width: 100%; height: auto; margin-top: 14px; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--text-secondary); }
+.legend i { width: 10px; height: 10px; border-radius: 999px; flex: none; }
+
+/* inline mid-article CTA */
+.inline-cta {
+  margin: 40px 0; padding: 22px 24px; border-radius: var(--r-card);
+  background: var(--accent-wash); border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px;
+}
+@media (max-width: 620px) { .inline-cta { grid-template-columns: 1fr; } }
+.inline-cta p { font-size: 15px; line-height: 1.5; color: var(--text-primary); margin: 0; }
+.inline-cta p strong { font-weight: 600; }
+
+/* ---------- related ---------- */
+.related { padding-top: 56px; }
+.related > h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 20px; }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+.acard { display: block; text-decoration: none; color: inherit; }
+.acard img {
+  width: 100%; aspect-ratio: 3 / 2; object-fit: cover;
+  border-radius: var(--r-card); border: 1px solid var(--border);
+  transition: opacity .2s;
+}
+.acard:hover img { opacity: .88; }
+.acard h3 { margin-top: 12px; font-size: 16px; font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; }
+.acard:hover h3 { color: var(--accent); }
+.acard p { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--text-secondary); }
+.acard .m { margin-top: 10px; font-size: 12px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="progress" aria-hidden="true"></div>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <rect x="1" y="1" width="20" height="20" rx="5" fill="var(--accent)"/>
+        <path d="M6 14.5 L9.5 10 L12.5 12.5 L16 6.5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Margin Lab
+    </a>
+    <nav>
+      <a class="opt" href="#" aria-current="page">Articles</a>
+      <a class="opt" href="#">How it works</a>
+      <a href="#">Log in</a>
+      <a class="btn btn-primary" href="#" style="margin-left:8px">Free P&amp;L analysis</a>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch theme" title="Switch theme" style="margin-left:8px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3.1"/>
+          <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2 3.1 3.1"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap-narrow" style="max-width:1100px">
+
+  <article>
+    <header class="ahead">
+      <span class="kicker">RGM 101</span>
+      <h1>Price, volume and mix: the only three ways revenue moves</h1>
+      <p class="dek">Revenue went up 15.9 percent. Until you split it three ways, you do not know whether that is good news.</p>
+
+      <div class="byline">
+        <span class="avatar" aria-hidden="true">NA</span>
+        <span class="who">Nurul Aziz<span>Principal, Margin Lab</span></span>
+        <span class="when">14 Jul 2026 · 7 min read</span>
+      </div>
+
+      <figure class="hero-fig">
+        <!-- Art direction, not a CSS crop. A 16:9 hero letterboxed into a phone
+             is ~200px tall and reads as a banner; the square tile carries the
+             same photo at real size. Same seed, so it is the same image. -->
+        <picture>
+          <source media="(max-width: 620px)"
+                  srcset="https://picsum.photos/seed/rgm-101-price-volume-mix-shelf/900/900"
+                  width="900" height="900">
+          <img src="https://picsum.photos/seed/rgm-101-price-volume-mix-shelf/1600/900"
+               alt="Packaged goods on a wholesale shelf, price labels facing forward"
+               width="1600" height="900" fetchpriority="high">
+        </picture>
+        <figcaption>Two products, same revenue growth, two completely different stories.</figcaption>
+      </figure>
+    </header>
+
+    <div class="body-grid">
+
+      <div class="prose">
+        <p class="lead">A distributor we worked with last year opened a board deck with one line: <strong>revenue up 15.9 percent</strong>. The room relaxed. Six months later they were out of working capital.</p>
+
+        <p>Revenue is a product of two things you control and one thing you usually do not notice. Every ringgit of movement resolves into exactly three effects, and they behave nothing alike.</p>
+
+        <h2 id="s1">The three effects</h2>
+
+        <p><strong>Price</strong> is what you charge. A price effect flows almost entirely to gross profit because the cost of the unit did not change. It is the most valuable ringgit of growth you can earn, and the one customers notice first.</p>
+
+        <p><strong>Volume</strong> is how many units move. A volume effect brings its own cost with it. You keep the gross margin percentage, so profit grows, but so does working capital, warehouse space, and delivery cost.</p>
+
+        <p><strong>Mix</strong> is which products moved. Mix is the effect nobody budgets for. If growth came from your cheapest line, revenue rises while blended margin falls. Nothing on the income statement flags it.</p>
+
+        <div class="callout">
+          <div class="t">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.4v4M8 4.9v.1"/></svg>
+            The test
+          </div>
+          If you cannot say which of the three drove last quarter, you cannot repeat it on purpose. You got a result, not a lever.
+        </div>
+
+        <h2 id="s2">What the split looked like</h2>
+
+        <p>Here is the distributor's actual decomposition. Growth of RM 826k, split three ways, on a true zero baseline so the negative arm is not hidden.</p>
+
+        <figure class="chart-card">
+          <h4>Revenue growth by effect, FY2024 to FY2025</h4>
+          <p class="sub">RM '000</p>
+          <svg class="plot" id="chartPvm" viewBox="0 0 620 170" role="img" aria-label="Price contributed 512, volume 389, and mix minus 75 thousand ringgit to revenue growth"></svg>
+          <div class="legend">
+            <span><i style="background:var(--good)"></i>Added to revenue</span>
+            <span><i style="background:var(--critical)"></i>Removed from revenue</span>
+          </div>
+        </figure>
+
+        <p>Price did most of the work, which is the good version of this chart. But mix took RM 75k straight back out. Growth came disproportionately from 500g retail packs, which carry a thinner margin than the 5kg food-service cases the business was built on.</p>
+
+        <blockquote>
+          We were celebrating a number that was quietly getting more expensive to produce.
+          <cite>Finance manager, Klang Valley distributor</cite>
+        </blockquote>
+
+        <h2 id="s3">Why mix hides</h2>
+
+        <p>Mix does not appear on a P&amp;L. It has no line item. It shows up as a slow drift in gross margin percentage that gets explained away as input cost pressure for three or four quarters in a row.</p>
+
+        <ul>
+          <li>Gross margin fell 40 basis points, so someone blames raw material prices.</li>
+          <li>Raw material prices were flat, so someone blames freight.</li>
+          <li>Freight was flat, and by now nobody is looking.</li>
+        </ul>
+
+        <p>The actual cause was a channel shift that happened eighteen months earlier and nobody decomposed.</p>
+
+        <div class="inline-cta">
+          <p><strong>Want your own split?</strong> Upload twelve months of P&amp;L and we will return the price, volume and mix decomposition, free.</p>
+          <a class="btn btn-primary" href="#">Get my analysis</a>
+        </div>
+
+        <h2 id="s4">How to run the split yourself</h2>
+
+        <p>You need unit volumes by SKU for both periods, not just revenue. Most businesses have this and have never joined it to the income statement.</p>
+
+        <ol>
+          <li><strong>Price effect.</strong> Change in average price, multiplied by prior-period volume.</li>
+          <li><strong>Volume effect.</strong> Change in total volume, multiplied by prior-period average price.</li>
+          <li><strong>Mix effect.</strong> The residual. If your three effects do not sum exactly to the revenue change, the residual is mix, and it is real.</li>
+        </ol>
+
+        <p>Run it monthly, not annually. Mix drifts slowly enough that a yearly view catches it a year late.</p>
+
+        <h2 id="s5">What to do with the answer</h2>
+
+        <p>Each effect has a different response, which is the whole point of separating them.</p>
+
+        <ul>
+          <li><strong>Price-led growth</strong> is your strongest position. Protect it. Check that volume has not started falling as a consequence.</li>
+          <li><strong>Volume-led growth</strong> needs a working-capital plan before it needs a celebration.</li>
+          <li><strong>Negative mix</strong> is a pricing-architecture problem, not a sales problem. The cheap line is winning because it is priced to win.</li>
+        </ul>
+
+        <p>The distributor repriced two retail SKUs and moved a volume rebate from case count to margin contribution. Mix turned positive the following quarter without losing a single account.</p>
+      </div>
+
+      <aside class="rail">
+        <h2>On this page</h2>
+        <ol>
+          <li><a href="#s1">The three effects</a></li>
+          <li><a href="#s2">What the split looked like</a></li>
+          <li><a href="#s3">Why mix hides</a></li>
+          <li><a href="#s4">How to run the split yourself</a></li>
+          <li><a href="#s5">What to do with the answer</a></li>
+        </ol>
+      </aside>
+
+    </div>
+  </article>
+
+  <section class="related">
+    <h2>Keep reading</h2>
+    <div class="cards">
+      <a class="acard" href="#">
+        <img src="https://picsum.photos/seed/rgm-opex-ratio-warehouse/900/600" alt="Warehouse aisle with pallet racking" width="900" height="600" loading="lazy">
+        <h3>The opex ratio your accountant will not show you</h3>
+        <p>Absolute opex always rises. The number that matters is what it costs you per ringgit of revenue.</p>
+        <span class="m">6 min read</span>
+      </a>
+      <a class="acard" href="#">
+        <img src="https://picsum.photos/seed/rgm-pnl-bridge-ledger/900/600" alt="Printed financial statement on a desk" width="900" height="600" loading="lazy">
+        <h3>Reading a P&amp;L bridge in ninety seconds</h3>
+        <p>Six bars between revenue and net profit. Here is what each one is allowed to tell you.</p>
+        <span class="m">4 min read</span>
+      </a>
+      <a class="acard" href="#">
+        <img src="https://picsum.photos/seed/rgm-discount-payback-market/900/600" alt="Wholesale market stall with produce crates" width="900" height="600" loading="lazy">
+        <h3>When a discount pays for itself</h3>
+        <p>A 10 percent discount at a 40 percent margin needs 33 percent more volume. Most promotions never get there.</p>
+        <span class="m">8 min read</span>
+      </a>
+    </div>
+  </section>
+
+  <section style="padding-top:56px">
+    <div class="cta">
+      <div>
+        <h2>Find your own three effects</h2>
+        <p>Upload twelve months of P&amp;L in our template. You get the price, volume and mix split, a margin bridge, and an opex breakdown, emailed within minutes. No cost, no call required.</p>
+      </div>
+      <a class="btn btn-primary" href="#">Get my analysis</a>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap-narrow" style="max-width:1100px">
+    <span>Margin Lab</span>
+    <a href="#">Articles</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+    <span style="margin-left:auto">Sample content for design reference.</span>
+  </div>
+</footer>
+
+<script src="chart.js"></script>
+<script>
+/* ============================================================
+   Inline chart: diverging bars, true zero baseline.
+   Polarity is the job, so the marks wear status tokens and every bar
+   carries a signed label. Identity is never colour alone.
+   Re-lays-out on resize via responsiveChart, so the axis text stays
+   12px on a phone instead of scaling down with the drawing.
+   ============================================================ */
+const PVM = [
+  { label: 'Price',  value:  512 },
+  { label: 'Volume', value:  389 },
+  { label: 'Mix',    value:  -75 },
+];
+
+responsiveChart(
+  document.getElementById('chartPvm'),
+  w => (isNarrow(w) ? 170 : 175),
+  (svg, W, H) => {
+    const narrow = isNarrow(W);
+    const M = { t: 10, r: narrow ? 46 : 62, b: 32, l: Math.min(74, Math.round(W * 0.20)) };
+    const iw = W - M.l - M.r, ih = H - M.t - M.b;
+    const lo = -200, hi = 600;
+    const X = v => M.l + ((v - lo) / (hi - lo)) * iw;
+
+    for (let v = lo; v <= hi; v += (narrow ? 400 : 200)) {
+      el('line', { x1: X(v), x2: X(v), y1: M.t, y2: M.t + ih,
+                   stroke: v === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1,
+                   'vector-effect': 'non-scaling-stroke' }, svg);
+      text(svg, X(v), M.t + ih + 20, fmtSigned(v), { size: 11, tabular: true });
+    }
+
+    const band = ih / PVM.length, BH = Math.min(24, band - 12);
+    PVM.forEach((s, i) => {
+      const y = M.t + band * i + (band - BH) / 2;
+      const x0 = X(0), x1 = X(s.value), pos = s.value >= 0;
+      const len = Math.max(Math.abs(x1 - x0), 2);
+      el('path', { d: pos ? barPathRight(x0, y, len, BH, 4) : barPathLeft(x0, y, len, BH, 4),
+                   fill: pos ? 'var(--good)' : 'var(--critical)' }, svg);
+      text(svg, M.l - 10, y + BH / 2 + 4, s.label,
+           { anchor: 'end', size: narrow ? 12 : 13, weight: 600, fill: 'var(--text-primary)' });
+      text(svg, pos ? x1 + 8 : x1 - 8, y + BH / 2 + 4, fmtSigned(s.value),
+           { anchor: pos ? 'start' : 'end', size: narrow ? 11 : 12, weight: 600,
+             fill: 'var(--text-primary)', tabular: true });
+    });
+  }
+);
+
+/* ---------- table-of-contents active state (IntersectionObserver, never a scroll listener) ---------- */
+const links = [...document.querySelectorAll('.rail a')];
+const heads = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const seen = new Map();
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => seen.set(e.target.id, e.isIntersecting ? e.intersectionRatio : 0));
+  let best = null, bestTop = Infinity;
+  heads.forEach(h => {
+    const top = h.getBoundingClientRect().top;
+    if (top <= 120 && Math.abs(top) < bestTop) { bestTop = Math.abs(top); best = h.id; }
+  });
+  if (!best) { const vis = [...seen].filter(([, r]) => r > 0)[0]; best = vis && vis[0]; }
+  links.forEach(a => a.setAttribute('aria-current', String(a.getAttribute('href') === '#' + best)));
+}, { rootMargin: '-80px 0px -70% 0px', threshold: [0, 1] });
+heads.forEach(h => io.observe(h));
+
+/* Deep link, so the review board can embed a fixed theme: ?theme=dark */
+const Q = new URLSearchParams(location.search);
+if (Q.get('theme')) document.documentElement.setAttribute('data-theme', Q.get('theme'));
+
+/* ---------- theme toggle (wins over the OS setting in both directions) ---------- */
+document.getElementById('themeBtn').addEventListener('click', () => {
+  const dark = getComputedStyle(document.body).getPropertyValue('--page').trim() === '#0d0d0d';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+</script>
+</body>
+</html>

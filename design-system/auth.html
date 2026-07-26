@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · Margin Lab</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* ============================================================
+   AUTH SURFACE  ·  /login and /register
+   Split screen, never a centered card on a mesh gradient.
+   Everything else comes from tokens.css
+   ============================================================ */
+
+.auth {
+  display: grid; grid-template-columns: 1fr 1fr;
+  min-height: calc(100dvh - 64px);
+}
+@media (max-width: 900px) { .auth { grid-template-columns: 1fr; } }
+
+/* left: the form */
+.auth-form {
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 48px 24px 64px;
+}
+.auth-inner { width: 100%; max-width: 420px; margin: 0 auto; }
+.auth-inner h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; }
+.auth-inner .sub { margin-top: 8px; font-size: 15px; color: var(--text-secondary); }
+form { display: grid; gap: 18px; margin-top: 28px; }
+.form-foot {
+  margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);
+  font-size: 14px; color: var(--text-secondary); text-align: center;
+}
+.form-foot a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.form-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.label-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.label-row a { font-size: 12px; font-weight: 500; color: var(--accent); text-decoration: none; }
+.label-row a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 520px) { .pair { grid-template-columns: 1fr; } }
+.legal { font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.legal a { color: var(--text-secondary); }
+
+/* password strength meter: fill carries severity, track is the same ramp, lighter */
+.meter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 2px; }
+.meter i { height: 4px; border-radius: 999px; background: var(--surface-2); }
+.meter[data-level="1"] i:nth-child(1) { background: var(--critical); }
+.meter[data-level="2"] i:nth-child(-n+2) { background: var(--warning); }
+.meter[data-level="3"] i { background: var(--good); }
+.meter-note { font-size: 12px; color: var(--text-secondary); }
+
+/* file dropzone */
+.drop {
+  display: grid; justify-items: center; gap: 8px; text-align: center;
+  padding: 26px 20px; cursor: pointer;
+  border: 1.5px dashed var(--axis); border-radius: var(--r-card);
+  background: var(--surface); transition: border-color .15s, background .15s;
+}
+.drop:hover, .drop.is-over { border-color: var(--accent); background: var(--accent-wash); }
+.drop svg { color: var(--text-muted); }
+.drop:hover svg, .drop.is-over svg { color: var(--accent); }
+.drop .t { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.drop .d { font-size: 12px; color: var(--text-secondary); }
+.field-error .drop { border-color: var(--critical); }
+
+.file-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 12px; border: 1px solid var(--border); border-radius: var(--r-ctrl);
+  background: var(--surface-2); font-size: 13px;
+}
+.file-pill svg { flex: none; color: var(--accent); }
+.file-pill .n { font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-pill .s { color: var(--text-muted); margin-left: auto; flex: none; }
+.file-pill button { background: none; border: 0; padding: 4px; cursor: pointer; color: var(--text-muted); display: grid; place-items: center; border-radius: 4px; }
+.file-pill button:hover { color: var(--critical); background: var(--surface); }
+
+/* right: the proof panel. Product UI, so no stock photo. */
+.auth-aside {
+  background: var(--surface); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 48px 40px; gap: 32px;
+}
+@media (max-width: 900px) { .auth-aside { border-left: 0; border-top: 1px solid var(--border); padding: 40px 24px; } }
+.aside-inner { width: 100%; max-width: 420px; margin: 0 auto; display: grid; gap: 30px; }
+.aside-inner > h2 { font-size: 20px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.3; }
+.proof { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.proof .v { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; }
+.proof .k { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.35; }
+.quote { border-left: 2px solid var(--accent); padding-left: 18px; }
+.quote p { font-size: 15px; line-height: 1.6; color: var(--text-primary); }
+.quote .who { margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+.quote .who b { display: block; color: var(--text-secondary); font-weight: 600; }
+.steps { display: grid; gap: 12px; }
+.steps li { display: flex; gap: 11px; align-items: flex-start; font-size: 14px; color: var(--text-secondary); }
+.steps svg { flex: none; color: var(--good); margin-top: 2px; }
+.steps b { color: var(--text-primary); font-weight: 600; }
+.steps ul, .steps { list-style: none; padding: 0; }
+
+/* .refbar (reference-only toolbar) now lives in tokens.css */
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="brand" href="#">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+        <rect x="1" y="1" width="20" height="20" rx="5" fill="var(--accent)"/>
+        <path d="M6 14.5 L9.5 10 L12.5 12.5 L16 6.5" fill="none" stroke="var(--accent-ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Margin Lab
+    </a>
+    <nav>
+      <a class="opt" href="#">Articles</a>
+      <button class="icon-btn" id="themeBtn" aria-label="Switch theme" title="Switch theme">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+          <circle cx="8" cy="8" r="3.1"/>
+          <path d="M8 1v1.6M8 13.4V15M15 8h-1.6M2.6 8H1M12.9 3.1l-1.1 1.1M4.2 11.8l-1.1 1.1M12.9 12.9l-1.1-1.1M4.2 4.2 3.1 3.1"/>
+        </svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<!-- Reference-only. Delete this block when porting to the app. -->
+<div class="refbar">
+  <strong>REFERENCE ONLY</strong>
+  <span>Route</span>
+  <div class="seg" id="routeSeg" role="group" aria-label="Route">
+    <button aria-pressed="true" data-route="login">/login</button>
+    <button aria-pressed="false" data-route="register">/register</button>
+  </div>
+  <span>State</span>
+  <div class="seg" id="stateSeg" role="group" aria-label="State">
+    <button aria-pressed="true" data-state="default">Default</button>
+    <button aria-pressed="false" data-state="error">Error</button>
+    <button aria-pressed="false" data-state="submitting">Submitting</button>
+  </div>
+</div>
+
+<main class="auth">
+
+  <!-- ============================ LEFT: FORM ============================ -->
+  <section class="auth-form">
+    <div class="auth-inner">
+
+      <!-- ---------------- /login ---------------- -->
+      <div id="viewLogin">
+        <h1>Log in to Margin Lab</h1>
+        <p class="sub">Your past analyses and uploads are on your dashboard.</p>
+
+        <div class="banner banner-error hidden" id="loginBanner" role="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+          <span>That email and password do not match an account. Check both, or reset your password.</span>
+        </div>
+
+        <form id="loginForm" novalidate>
+          <div class="field" id="fLoginEmail">
+            <label for="loginEmail">Work email</label>
+            <input class="input" id="loginEmail" name="email" type="email" autocomplete="email" placeholder="you@company.com.my">
+            <p class="err hidden" id="eLoginEmail">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+              Enter a valid email address.
+            </p>
+          </div>
+
+          <div class="field" id="fLoginPw">
+            <div class="label-row">
+              <label for="loginPw">Password</label>
+              <a href="#">Forgot password?</a>
+            </div>
+            <span class="input-affix">
+              <input class="input" id="loginPw" name="password" type="password" autocomplete="current-password">
+              <button type="button" data-toggle-pw="loginPw" aria-label="Show password">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8s2.6-4.4 7-4.4S15 8 15 8s-2.6 4.4-7 4.4S1 8 1 8Z"/><circle cx="8" cy="8" r="1.9"/></svg>
+              </button>
+            </span>
+            <p class="err hidden" id="eLoginPw">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+              Enter your password.
+            </p>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" id="loginSubmit">Log in</button>
+        </form>
+
+        <p class="form-foot">No account yet? <a href="#" data-goto="register">Get a free P&amp;L analysis</a></p>
+      </div>
+
+      <!-- ---------------- /register ---------------- -->
+      <div id="viewRegister" class="hidden">
+        <h1>Get your free P&amp;L analysis</h1>
+        <p class="sub">Twelve months of P&amp;L in, a full margin breakdown out. Usually under two minutes.</p>
+
+        <div class="banner banner-error hidden" id="regBanner" role="alert">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+          <span>We could not read that file. Your other answers are saved, so just upload a corrected file below.</span>
+        </div>
+
+        <form id="regForm" novalidate>
+          <div class="pair">
+            <div class="field">
+              <label for="regName">Full name</label>
+              <input class="input" id="regName" name="name" type="text" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="regCompany">Company</label>
+              <input class="input" id="regCompany" name="company" type="text" autocomplete="organization">
+            </div>
+          </div>
+
+          <div class="pair">
+            <div class="field">
+              <label for="regRole">Job role</label>
+              <select class="input" id="regRole" name="job_role">
+                <option value="">Select one</option>
+                <option>Owner or founder</option>
+                <option>Finance director or CFO</option>
+                <option>Finance manager</option>
+                <option>Commercial or sales lead</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="regMobile">Mobile</label>
+              <input class="input" id="regMobile" name="mobile" type="tel" autocomplete="tel" placeholder="+60 12 345 6789">
+            </div>
+          </div>
+
+          <div class="field" id="fRegEmail">
+            <label for="regEmail">Work email</label>
+            <p class="help">We send the finished analysis here.</p>
+            <input class="input" id="regEmail" name="email" type="email" autocomplete="email">
+            <p class="err hidden" id="eRegEmail">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+              That email is already registered. Log in instead.
+            </p>
+          </div>
+
+          <div class="field">
+            <label for="regPw">Password</label>
+            <span class="input-affix">
+              <input class="input" id="regPw" name="password" type="password" autocomplete="new-password">
+              <button type="button" data-toggle-pw="regPw" aria-label="Show password">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8s2.6-4.4 7-4.4S15 8 15 8s-2.6 4.4-7 4.4S1 8 1 8Z"/><circle cx="8" cy="8" r="1.9"/></svg>
+              </button>
+            </span>
+            <div class="meter" id="pwMeter" data-level="0" aria-hidden="true"><i></i><i></i><i></i></div>
+            <p class="meter-note" id="pwNote">At least 10 characters. A short phrase works well.</p>
+          </div>
+
+          <fieldset style="border:0;padding:0;margin:0" class="field">
+            <legend style="font-size:13px;font-weight:600;padding:0;margin-bottom:6px">Which P&amp;L are you uploading?</legend>
+            <div class="choice-row">
+              <label class="choice">
+                <input type="radio" name="pnl_type" value="full-year" checked>
+                <span><span class="t">Full year</span><span class="d">One row per month, 12 months</span></span>
+              </label>
+              <label class="choice">
+                <input type="radio" name="pnl_type" value="monthly">
+                <span><span class="t">Part year</span><span class="d">Fewer than 12 months</span></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="field" id="fRegFile">
+            <div class="label-row">
+              <label for="regFile">P&amp;L file</label>
+              <a href="#">Download template</a>
+            </div>
+            <label class="drop" id="drop" for="regFile">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5V4M8 7.6 12 3.6l4 4"/><path d="M3.5 15v3.5a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V15"/></svg>
+              <span class="t">Drop your file here, or browse</span>
+              <span class="d">CSV or XLSX, up to 10 MB, using our template</span>
+              <input id="regFile" name="file" type="file" accept=".csv,.xlsx" class="vh">
+            </label>
+            <div class="file-pill hidden" id="filePill">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 1.5H4.5a1.5 1.5 0 0 0-1.5 1.5v10a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5V5.5Z"/><path d="M9 1.5v4h4"/></svg>
+              <span class="n">seri-murni-pnl-fy2025.xlsx</span>
+              <span class="s">48 KB</span>
+              <button type="button" aria-label="Remove file" id="clearFile">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+              </button>
+            </div>
+            <p class="err hidden" id="eRegFile">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 4.7v3.8M8 10.9v.1"/></svg>
+              Missing the Revenue and COGS columns. Compare against the template.
+            </p>
+          </div>
+
+          <button class="btn btn-primary btn-block" type="submit" id="regSubmit">Get my free analysis</button>
+          <p class="legal">By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>. Your P&amp;L file is stored encrypted and is never shared.</p>
+        </form>
+
+        <p class="form-foot">Already have an account? <a href="#" data-goto="login">Log in</a></p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================ RIGHT: PROOF ============================ -->
+  <aside class="auth-aside">
+    <div class="aside-inner">
+      <h2>Most P&amp;Ls hide the same three things.</h2>
+
+      <div class="proof">
+        <div>
+          <div class="v" style="color:var(--s1)">4.2pp</div>
+          <div class="k">Median net margin gain in year one</div>
+        </div>
+        <div>
+          <div class="v" style="color:var(--s1)">RM 6M</div>
+          <div class="k">Typical client revenue band</div>
+        </div>
+        <div>
+          <div class="v" style="color:var(--s1)">2 min</div>
+          <div class="k">From upload to emailed analysis</div>
+        </div>
+      </div>
+
+      <ul class="steps">
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.6 6.3 12 13 4.6"/></svg>
+          <span><b>Margin bridge.</b> Every ringgit from revenue to net profit.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.6 6.3 12 13 4.6"/></svg>
+          <span><b>Price, volume and mix.</b> Why revenue actually moved.</span>
+        </li>
+        <li>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.6 6.3 12 13 4.6"/></svg>
+          <span><b>Opex against revenue.</b> Which costs outgrew the business.</span>
+        </li>
+      </ul>
+
+      <blockquote class="quote">
+        <p>We had been reading the same P&amp;L for four years. The mix split took twenty minutes and changed how we price every retail SKU.</p>
+        <div class="who"><b>Faridah Ismail</b>Finance Director, Teratai Beverages</div>
+      </blockquote>
+    </div>
+  </aside>
+
+</main>
+
+<script>
+/* ============================================================
+   Form behaviour + the reference state switcher
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const show = (n, on) => n.classList.toggle('hidden', !on);
+
+/* ---------- route switch ---------- */
+function setRoute(route) {
+  show($('#viewLogin'),    route === 'login');
+  show($('#viewRegister'), route === 'register');
+  document.title = (route === 'login' ? 'Log in' : 'Get your free P&L analysis') + ' · Margin Lab';
+  $('#routeSeg').querySelectorAll('button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.route === route)));
+  setState(currentState);
+}
+let currentRoute = 'login', currentState = 'default';
+
+/* ---------- state switch: default / error / submitting ---------- */
+function setState(state) {
+  currentState = state;
+  $('#stateSeg').querySelectorAll('button').forEach(b =>
+    b.setAttribute('aria-pressed', String(b.dataset.state === state)));
+
+  const isErr = state === 'error', isBusy = state === 'submitting';
+
+  /* login */
+  show($('#loginBanner'), isErr);
+  $('#fLoginEmail').classList.toggle('field-error', isErr);
+  $('#fLoginPw').classList.toggle('field-error', isErr);
+  show($('#eLoginEmail'), isErr);
+  show($('#eLoginPw'), isErr);
+  busy($('#loginSubmit'), isBusy, 'Log in', 'Checking your details');
+  disableFields($('#loginForm'), isBusy);
+
+  /* register */
+  show($('#regBanner'), isErr);
+  $('#fRegEmail').classList.toggle('field-error', isErr);
+  $('#fRegFile').classList.toggle('field-error', isErr);
+  show($('#eRegEmail'), isErr);
+  show($('#eRegFile'), isErr);
+  busy($('#regSubmit'), isBusy, 'Get my free analysis', 'Analysing your P&L');
+  disableFields($('#regForm'), isBusy);
+}
+function busy(btn, on, idleLabel, busyLabel) {
+  btn.toggleAttribute('aria-disabled', on);
+  btn.innerHTML = on
+    ? `<span class="spinner" aria-hidden="true"></span>${busyLabel}`
+    : idleLabel;
+}
+function disableFields(form, on) {
+  form.querySelectorAll('input, select, textarea').forEach(f => f.disabled = on);
+}
+
+$('#routeSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  currentRoute = b.dataset.route; setRoute(currentRoute);
+});
+$('#stateSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  setState(b.dataset.state);
+});
+document.querySelectorAll('[data-goto]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); currentRoute = a.dataset.goto; setState('default'); setRoute(currentRoute);
+}));
+
+/* ---------- password reveal ---------- */
+document.querySelectorAll('[data-toggle-pw]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.togglePw);
+    const shown = input.type === 'text';
+    input.type = shown ? 'password' : 'text';
+    btn.setAttribute('aria-label', shown ? 'Show password' : 'Hide password');
+  });
+});
+
+/* ---------- password strength ---------- */
+const pw = $('#regPw'), meter = $('#pwMeter'), note = $('#pwNote');
+pw.addEventListener('input', () => {
+  const v = pw.value;
+  const level = v.length === 0 ? 0
+    : v.length < 10 ? 1
+    : (v.length >= 14 || /[^a-zA-Z0-9]/.test(v)) ? 3
+    : 2;
+  meter.dataset.level = level;
+  note.textContent = ['At least 10 characters. A short phrase works well.',
+                      'Too short. Add a few more characters.',
+                      'Good. A symbol or more length would make it strong.',
+                      'Strong password.'][level];
+});
+
+/* ---------- dropzone ---------- */
+const drop = $('#drop'), pill = $('#filePill'), fileInput = $('#regFile');
+['dragenter','dragover'].forEach(t => drop.addEventListener(t, e => { e.preventDefault(); drop.classList.add('is-over'); }));
+['dragleave','drop'].forEach(t => drop.addEventListener(t, () => drop.classList.remove('is-over')));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; showFile(fileInput.files[0]); }
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) showFile(fileInput.files[0]); });
+function showFile(f) {
+  pill.querySelector('.n').textContent = f.name;
+  pill.querySelector('.s').textContent = Math.max(1, Math.round(f.size / 1024)) + ' KB';
+  show(pill, true); show(drop, false);
+}
+$('#clearFile').addEventListener('click', () => {
+  fileInput.value = ''; show(pill, false); show(drop, true);
+});
+
+/* forms are reference-only, so nothing is submitted */
+document.querySelectorAll('form').forEach(f => f.addEventListener('submit', e => e.preventDefault()));
+
+/* Deep links, so the review board can embed a specific route and state:
+   ?route=register   ?state=error   ?theme=dark   ?ref=0 (hide the reference toolbar) */
+const Q = new URLSearchParams(location.search);
+/* Hide, never remove: the route and state buttons live inside .refbar and
+   setRoute/setState read them. */
+if (Q.get('ref') === '0') document.querySelector('.refbar')?.classList.add('hidden');
+if (Q.get('theme')) document.documentElement.setAttribute('data-theme', Q.get('theme'));
+
+/* ---------- theme toggle ---------- */
+$('#themeBtn').addEventListener('click', () => {
+  const dark = getComputedStyle(document.body).getPropertyValue('--page').trim() === '#0d0d0d';
+  document.documentElement.setAttribute('data-theme', dark ? 'light' : 'dark');
+});
+
+currentState = ['default','error','submitting'].includes(Q.get('state')) ? Q.get('state') : 'default';
+currentRoute = Q.get('route') === 'register' ? 'register' : 'login';
+setRoute(currentRoute);
+</script>
+</body>
+</html>
