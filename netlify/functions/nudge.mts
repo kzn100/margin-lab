@@ -37,6 +37,10 @@ export default async function handler() {
   const site = siteUrl().replace(/\/$/, "");
   let stage1Sent = 0;
   let stage2Sent = 0;
+  // Surfaced in the response, not just the platform log, so a misconfigured
+  // deploy can be diagnosed without log access. Send errors describe why the
+  // provider refused; they never carry the credential.
+  const errors: string[] = [];
 
   // --- Stage 1: captured an email, never finished signing up. ---
   const { data: starts } = await db
@@ -58,6 +62,7 @@ export default async function handler() {
       // burning the one nudge this person gets.
       if (!result.sent) {
         console.error("[nudge] stage 1 send failed", { to: start.email, error: result.error });
+        errors.push(`stage1: ${result.error}`);
         continue;
       }
       await db
@@ -85,6 +90,7 @@ export default async function handler() {
       const result = await sendEmail(lead.email, mail.subject, mail.text);
       if (!result.sent) {
         console.error("[nudge] stage 2 send failed", { to: lead.email, error: result.error });
+        errors.push(`stage2: ${result.error}`);
         continue;
       }
       await db
@@ -96,7 +102,7 @@ export default async function handler() {
   }
 
   console.info(`[nudge] sent ${stage1Sent} abandoned-signup, ${stage2Sent} no-upload`);
-  return new Response(JSON.stringify({ stage1Sent, stage2Sent }), {
+  return new Response(JSON.stringify({ stage1Sent, stage2Sent, errors }), {
     headers: { "content-type": "application/json" },
   });
 }
