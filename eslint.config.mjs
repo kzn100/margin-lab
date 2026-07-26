@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Netlify build output.
+    ".netlify/**",
     // Static HTML/JS design reference, not application code.
     "design-system/**",
   ]),
