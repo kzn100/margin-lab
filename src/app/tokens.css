@@ -518,6 +518,12 @@ footer a:hover { color: var(--text-primary); }
      so a longer label or a translation cannot push the header to two lines. */
   .hdr nav .btn { padding-inline: 12px; margin-left: 4px !important; }
 
+  /* Marketing headers keep brand + primary CTA + theme, nothing else.
+     "Log in" is secondary for cold traffic and lives in the footer; the
+     free-analysis CTA is the entire point of the page. Product headers
+     (dashboard, admin) keep their nav, because it is the only way around. */
+  .hdr[data-nav="marketing"] nav a:not(.btn) { display: none; }
+
   /* Full-bleed table scrollers fight the page on a phone. Keep the
      scroller, drop the negative-margin bleed that leaked page overflow. */
   .dtable-wrap { margin: 0; padding: 0; }

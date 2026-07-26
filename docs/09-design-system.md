@@ -7,6 +7,25 @@ if you are generating a page, read this file first and build only from these tok
 saturated data colors on a quiet neutral shell. The data is the only loud thing on
 the page.
 
+## Two places this system lives
+
+| | Where | Status |
+|---|---|---|
+| **The app** | `src/app/**` (Next.js 16, App Router) | `/`, `/articles`, `/articles/[slug]` are built |
+| **The reference** | `design-system/*.html` | All 18 screens, static, no build step |
+
+`design-system/tokens.css` is a **symlink** to `src/app/tokens.css`, so the reference
+pages and the app share one stylesheet by construction. Edit either path and both move.
+Note that tools which refuse to write through symlinks will silently skip it: write to
+`src/app/tokens.css` and verify the rule actually landed.
+
+There is **no `index.html`**. In the App Router the landing page is `src/app/page.tsx`.
+
+**Article photography is placeholder.** `/public/articles/*.jpg` are random stock
+frames that do not match their articles. Replace them with real or generated imagery
+(the spec calls for Higgsfield at design time) before this goes in front of traffic.
+Keep the two-crop convention: `-wide.jpg` at 16:9 and `-square.jpg` at 1:1.
+
 ## Reference implementations
 
 One stylesheet holds every token and the shared shell. The three pages link it and add

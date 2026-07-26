@@ -139,6 +139,44 @@
   color: var(--text-muted);
 }
 
+/* Tables carry the arithmetic in the RGM pieces, so they read as data, not
+   prose. Wrapper scrolls on narrow screens rather than squeezing columns. */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--surface);
+}
+.tableWrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+.tableWrap th,
+.tableWrap td {
+  text-align: left;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.tableWrap th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.tableWrap tbody td:first-child {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.tableWrap tbody tr:last-child td {
+  border-bottom: 0;
+}
+
 .callout {
   border: 1px solid var(--border);
   border-radius: var(--r-card);

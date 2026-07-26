@@ -578,7 +578,98 @@ export function RevenueTrendChart({
   return <ResponsiveChart heightFor={heightFor} draw={draw} label="Revenue by month" />;
 }
 
-/* ---------------- 5. opex breakdown ---------------- */
+/* ---------------- 5. leads per week (admin) ---------------- */
+
+export function LeadsPerWeekChart({
+  data,
+}: {
+  data: { weekStart: string; count: number; partial?: boolean }[];
+}) {
+  const heightFor = useCallback((w: number) => (isNarrow(w) ? 200 : 240), []);
+
+  const draw = useCallback<Draw>(
+    (svg, W, H) => {
+      const narrow = isNarrow(W);
+      const M = { t: 20, r: narrow ? 10 : 16, b: 34, l: narrow ? 34 : 42 };
+      const iw = W - M.l - M.r;
+      const ih = H - M.t - M.b;
+
+      const { lo, hi, step } = niceDomain(
+        data.map((d) => d.count),
+        narrow ? 3 : 4,
+      );
+      const Y = (v: number) => M.t + ih - ((v - lo) / (hi - lo)) * ih;
+
+      for (let v = lo; v <= hi + step / 2; v += step) {
+        el(
+          "line",
+          {
+            x1: M.l,
+            x2: W - M.r,
+            y1: Y(v),
+            y2: Y(v),
+            stroke: v === 0 ? "var(--axis)" : "var(--grid)",
+            "stroke-width": 1,
+            "vector-effect": "non-scaling-stroke",
+          },
+          svg,
+        );
+        text(svg, M.l - 8, Y(v) + 4, fmtK(v), {
+          anchor: "end",
+          size: narrow ? 11 : 12,
+          tabular: true,
+        });
+      }
+
+      const band = iw / Math.max(1, data.length);
+      const BW = Math.min(30, band - (narrow ? 5 : 10));
+      const every = Math.max(1, Math.ceil(38 / band));
+
+      data.forEach((d, i) => {
+        const cx = M.l + band * i + band / 2;
+        el(
+          "path",
+          {
+            d: barPath(cx - BW / 2, Y(d.count), BW, Math.max(Y(0) - Y(d.count), 2), 4, "up"),
+            fill: "var(--s1)",
+            // The current week is still running, so its bar is not comparable
+            // to the completed ones. Hatching would need a pattern def; opacity
+            // says "provisional" with no extra machinery.
+            "fill-opacity": d.partial ? 0.45 : 1,
+          },
+          svg,
+        );
+        if (i % every === 0) {
+          text(svg, cx, M.t + ih + 20, weekLabel(d.weekStart), {
+            size: narrow ? 10 : 11,
+            fill: "var(--text-secondary)",
+          });
+        }
+      });
+    },
+    [data],
+  );
+
+  return (
+    <ResponsiveChart
+      heightFor={heightFor}
+      draw={draw}
+      label={`New leads per week: ${data.map((d) => d.count).join(", ")}`}
+    />
+  );
+}
+
+/** "2026-07-20" → "20 Jul" */
+function weekLabel(iso: string) {
+  const d = new Date(iso);
+  return `${d.getUTCDate()} ${
+    ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][
+      d.getUTCMonth()
+    ]
+  }`;
+}
+
+/* ---------------- 6. opex breakdown ---------------- */
 
 export function OpexBreakdownChart({
   data,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { ArticleCard } from "@/components/ArticleCard";
-import { ARTICLES, getArticle, squareImage, wideImage } from "@/lib/articles";
+import { ARTICLES, defaultCta, getArticle, squareImage, wideImage } from "@/lib/articles";
 import styles from "./article.module.css";
 
 /** Every article is known at build time, so prerender them all. */
@@ -29,6 +29,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   if (!article) notFound();
 
   const more = ARTICLES.filter((a) => a.slug !== article.slug).slice(0, 3);
+  const cta = article.cta ?? defaultCta;
 
   return (
     <>
@@ -111,6 +112,34 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
                       <cite>{block.cite}</cite>
                     </blockquote>
                   );
+                case "table":
+                  return (
+                    <div key={i} className={styles.tableWrap}>
+                      <table>
+                        {/* Some tables are label/value pairs with no real
+                            column headings, so an all-empty head is dropped
+                            rather than rendered as a blank strip. */}
+                        {block.head.some(Boolean) && (
+                          <thead>
+                            <tr>
+                              {block.head.map((h, j) => (
+                                <th key={j}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                        )}
+                        <tbody>
+                          {block.rows.map((row, j) => (
+                            <tr key={j}>
+                              {row.map((cell, k) => (
+                                <td key={k}>{cell}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
                 case "callout":
                   return (
                     <aside key={i} className={styles.callout}>
@@ -130,11 +159,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
           <div className={styles.inlineCta}>
             <p>
-              <strong>Want your own split?</strong> Upload twelve months of P&amp;L and we will
-              return the price, volume and mix decomposition, free.
+              <strong>{cta.title}</strong> {cta.text}
             </p>
             <Link className="btn btn-primary" href="/register">
-              Get my analysis
+              {cta.label}
             </Link>
           </div>
         </article>
