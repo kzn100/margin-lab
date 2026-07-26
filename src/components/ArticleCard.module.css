@@ -1,0 +1,111 @@
+.card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+}
+
+/* ---------- feature (lead) card ---------- */
+.feature .img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: var(--r-card);
+  border: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+.feature:hover .img {
+  opacity: 0.88;
+}
+
+.kicker {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-wash);
+  border-radius: var(--r-ctrl);
+  padding: 5px 10px;
+}
+
+.titleLg {
+  margin-top: 12px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+.card:hover .titleLg,
+.card:hover .titleSm {
+  color: var(--accent);
+}
+
+.dek {
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  max-width: 52ch;
+}
+
+.meta {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------- compact row ---------- */
+.row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.thumb {
+  width: 96px;
+  height: 96px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--r-ctrl);
+  border: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+.row:hover .thumb {
+  opacity: 0.88;
+}
+
+.rowBody {
+  min-width: 0;
+}
+
+.titleSm {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.row .meta {
+  margin-top: 6px;
+}
+
+@media (max-width: 620px) {
+  .titleLg {
+    font-size: 20px;
+  }
+  .thumb {
+    width: 72px;
+    height: 72px;
+  }
+}
