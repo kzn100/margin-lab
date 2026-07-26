@@ -518,11 +518,9 @@ footer a:hover { color: var(--text-primary); }
      so a longer label or a translation cannot push the header to two lines. */
   .hdr nav .btn { padding-inline: 12px; margin-left: 4px !important; }
 
-  /* Marketing headers keep brand + primary CTA + theme, nothing else.
-     "Log in" is secondary for cold traffic and lives in the footer; the
-     free-analysis CTA is the entire point of the page. Product headers
-     (dashboard, admin) keep their nav, because it is the only way around. */
-  .hdr[data-nav="marketing"] nav a:not(.btn) { display: none; }
+  /* Marketing headers keep brand + Log in + primary CTA on one line, so
+     returning users can sign in without hunting for the footer. */
+  .hdr[data-nav="marketing"] nav a:not(.btn) { padding-inline: 8px; font-size: 13px; }
 
   /* Full-bleed table scrollers fight the page on a phone. Keep the
      scroller, drop the negative-margin bleed that leaked page overflow. */
@@ -535,6 +533,15 @@ footer a:hover { color: var(--text-primary); }
 
   .cta { padding: 24px 18px; }
   .card { padding: 16px; }
+}
+
+/* Keeping "Log in" in the marketing header costs ~3px too many at 320px, which
+   overflow-x: clip below then hides by shaving the primary CTA's right edge —
+   silently, since clipped overflow does not scroll. Buy the space back from
+   padding rather than dropping the link again. */
+@media (max-width: 360px) {
+  .hdr[data-nav="marketing"] nav a:not(.btn) { padding-inline: 5px; }
+  .hdr[data-nav="marketing"] nav .btn { padding-inline: 9px; }
 }
 
 /* Nothing may push the page sideways. Tables and charts scroll inside
