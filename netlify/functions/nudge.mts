@@ -31,7 +31,37 @@ function admin() {
 const siteUrl = () =>
   process.env.SITE_URL ?? process.env.URL ?? "https://margin-lab.netlify.app";
 
-export default async function handler() {
+/**
+ * Only the scheduler should get in here.
+ *
+ * Netlify documents that a registered scheduled function is unreachable over
+ * HTTP, but this deploy answered a plain unauthenticated curl and did the work,
+ * so that guarantee is not one to lean on. Netlify's scheduler posts a body
+ * carrying `next_run`; anything else has to present the shared secret.
+ *
+ * Default-deny: with NUDGE_SECRET unset, only a scheduled invocation passes.
+ * ponytail: `next_run` is forgeable if the endpoint really is public, so this
+ * raises the bar rather than sealing it. The damage it protects is small —
+ * forcing already-due nudges out early — and stamping still caps everyone at
+ * one email.
+ */
+async function authorised(request: Request) {
+  const secret = process.env.NUDGE_SECRET;
+  if (secret && request.headers.get("x-nudge-secret") === secret) return true;
+  try {
+    const body = (await request.clone().json()) as { next_run?: unknown };
+    return typeof body?.next_run === "string";
+  } catch {
+    // No body, or not JSON — never a scheduled invocation.
+    return false;
+  }
+}
+
+export default async function handler(request: Request) {
+  if (!(await authorised(request))) {
+    return new Response("Not found", { status: 404 });
+  }
+
   const db = admin();
   const now = new Date();
   const site = siteUrl().replace(/\/$/, "");

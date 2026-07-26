@@ -174,6 +174,14 @@ Each run, with a one-hour threshold:
 `upload_nudge_sent_at is null`, and no `pnl_uploads` row for that lead. Send,
 then stamp `upload_nudge_sent_at`.
 
+The handler refuses anything that is neither a scheduled invocation (recognised
+by the `next_run` body Netlify posts) nor carrying `NUDGE_SECRET` in an
+`x-nudge-secret` header, answering 404 rather than 401 so the endpoint does not
+confirm itself. Netlify documents scheduled functions as unreachable over HTTP,
+but this deploy answered an unauthenticated curl and did the work, so that is
+not a guarantee to lean on. Default-deny: with the secret unset, only the
+scheduler gets in.
+
 Stamp only on a successful send, so an SMTP outage retries on the next run
 rather than silently burning the one nudge each person gets. Sequential sends,
 not `Promise.all` — the volume is tiny and a rate limit is the likelier failure
