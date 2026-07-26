@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { computeMetrics } from "@/lib/pnl/compute";
 import { parsePnl, PnlParseError } from "@/lib/pnl/parse";
 import { sendResultsEmail } from "@/lib/email/results";
+import { sendEmail } from "@/lib/email/send";
+import { renderUploadReminderEmail } from "@/lib/email/upload-reminder";
 
 export const runtime = "nodejs";
 
@@ -130,6 +132,25 @@ export async function POST(request: Request) {
   };
 
   if (!hasFile || !buffer || !metrics) {
+    // Registration is the one moment we already know this account has no
+    // analysis, so the reminder goes now rather than something hunting for it
+    // later. Awaited, not fired and forgotten: this runs in a serverless
+    // function that can be frozen the moment the response is returned.
+    const origin = new URL(request.url).origin;
+    const mail = renderUploadReminderEmail(name, company, `${origin}/analyses/new`);
+    const result = await sendEmail(email, mail.subject, mail.text);
+    if (result.sent) {
+      await admin
+        .from("leads")
+        .update({ upload_nudge_sent_at: new Date().toISOString() })
+        .eq("id", lead.id);
+    } else {
+      // Never fatal. The account exists and the dashboard already prompts for a
+      // first analysis; losing the registration over a mail server would be the
+      // worse outcome by far.
+      console.error("[register] upload reminder not sent", { to: email, error: result.error });
+    }
+
     await signIn();
     return NextResponse.json({ redirect: "/dashboard" });
   }
