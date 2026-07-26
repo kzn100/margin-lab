@@ -1,4 +1,4 @@
-import { sendViaResend } from "@/lib/email/send";
+import { sendEmail } from "@/lib/email/send";
 import type { PnlMetrics } from "@/lib/pnl/compute";
 
 /**
@@ -72,6 +72,6 @@ function renderResultsEmail({
 }
 
 async function deliver(to: string, message: { subject: string; text: string }) {
-  const result = await sendViaResend(to, message.subject, message.text);
+  const result = await sendEmail(to, message.subject, message.text);
   if (!result.sent) console.error("[email] results email not sent", { to, error: result.error });
 }

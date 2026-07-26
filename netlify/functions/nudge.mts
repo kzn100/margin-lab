@@ -7,7 +7,7 @@ import {
   selectStage1,
   selectStage2,
 } from "../../src/lib/email/nudge.ts";
-import { sendViaResend } from "../../src/lib/email/send.ts";
+import { sendEmail } from "../../src/lib/email/send.ts";
 
 /**
  * Chases the two ways somebody ends up with no analysis: they typed an email
@@ -53,8 +53,8 @@ export default async function handler() {
 
     for (const start of selectStage1(starts, (matched ?? []).map((m) => m.email), now)) {
       const mail = renderStage1Email(`${site}/register`);
-      const result = await sendViaResend(start.email, mail.subject, mail.text);
-      // Stamped only on success, so a Resend outage retries next run instead of
+      const result = await sendEmail(start.email, mail.subject, mail.text);
+      // Stamped only on success, so an SMTP outage retries next run instead of
       // burning the one nudge this person gets.
       if (!result.sent) {
         console.error("[nudge] stage 1 send failed", { to: start.email, error: result.error });
@@ -82,7 +82,7 @@ export default async function handler() {
 
     for (const lead of selectStage2(leads, (uploads ?? []).map((u) => u.lead_id), now)) {
       const mail = renderStage2Email(lead.name, lead.company, `${site}/analyses/new`);
-      const result = await sendViaResend(lead.email, mail.subject, mail.text);
+      const result = await sendEmail(lead.email, mail.subject, mail.text);
       if (!result.sent) {
         console.error("[nudge] stage 2 send failed", { to: lead.email, error: result.error });
         continue;

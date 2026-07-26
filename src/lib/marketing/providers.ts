@@ -1,8 +1,8 @@
-import { emailConfigured, sendViaResend } from "@/lib/email/send";
+import { emailConfigured, sendEmail } from "@/lib/email/send";
 import { renderTemplate, type SegmentLead } from "./segment";
 
 /**
- * Outbound message channels. Email goes through Resend; WhatsApp is still
+ * Outbound message channels. Email goes out over SMTP; WhatsApp is still
  * undecided (Twilio vs Meta Cloud API) and renders to the log instead, so the
  * composer, the personalisation and the campaign audit trail are exercised
  * either way.
@@ -41,13 +41,13 @@ export async function sendEmailBlast(
     };
   }
 
-  // Sequential on purpose: a blast of 500 against Resend's rate limit wants a
-  // queue, not a Promise.all.
+  // Sequential on purpose: a blast of 500 down one pooled SMTP connection wants
+  // a queue, not a Promise.all — and Workspace caps a day's sending anyway.
   // ponytail: fine to a few hundred leads; move to a queue past that.
   let sent = 0;
   let failed = 0;
   for (const lead of leads) {
-    const result = await sendViaResend(
+    const result = await sendEmail(
       lead.email,
       renderTemplate(subject, lead),
       renderTemplate(body, lead),
