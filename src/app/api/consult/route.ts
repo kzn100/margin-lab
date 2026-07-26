@@ -1,17 +1,9 @@
-import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import {
-  consultPdfFilename,
-  consultPdfTitle,
-  renderConsultRequestEmail,
-  renderConsultRequestPdfLines,
-} from "@/lib/email/consult-request";
+import { loadConsultRequest, renderConsultPdf, storeConsultPdf } from "@/lib/consult";
+import { consultPdfFilename, renderConsultRequestEmail } from "@/lib/email/consult-request";
 import { sendEmail } from "@/lib/email/send";
-import { renderTextPdf } from "@/lib/pdf";
-import type { PnlMetrics } from "@/lib/pnl/compute";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { BUCKET } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
@@ -43,33 +35,12 @@ export async function POST(request: Request) {
   const resultId = typeof body?.resultId === "string" ? body.resultId : "";
   if (!resultId) return NextResponse.json({ error: "Missing analysis id." }, { status: 400 });
 
-  const { data } = await supabase
-    .from("pnl_results")
-    .select("id, lead_id, metrics, leads (name, company, job_role, mobile, email)")
-    .eq("id", resultId)
-    .maybeSingle();
-  if (!data) return NextResponse.json({ error: "Analysis not found." }, { status: 404 });
-
-  const lead = (Array.isArray(data.leads) ? data.leads[0] : data.leads) as {
-    name: string;
-    company: string;
-    job_role: string;
-    mobile: string;
-    email: string;
-  } | null;
-
-  const consult = {
-    name: lead?.name ?? ((user.user_metadata?.name as string | undefined) ?? "Unknown"),
-    company: lead?.company ?? ((user.user_metadata?.company as string | undefined) ?? "Unknown"),
-    jobRole: lead?.job_role ?? "",
-    mobile: lead?.mobile ?? "",
-    email: lead?.email ?? user.email ?? "",
-    requestedAt: new Date().toISOString(),
-    metrics: data.metrics as unknown as PnlMetrics,
-  };
+  const found = await loadConsultRequest(supabase, user, resultId);
+  if (!found) return NextResponse.json({ error: "Analysis not found." }, { status: 404 });
+  const { consult } = found;
 
   const mail = renderConsultRequestEmail(consult);
-  const pdf = renderTextPdf(consultPdfTitle(consult), renderConsultRequestPdfLines(consult));
+  const pdf = renderConsultPdf(consult);
 
   const to = consultTo();
   const sent = await sendEmail(to, mail.subject, mail.text, [
@@ -93,15 +64,11 @@ export async function POST(request: Request) {
   // not fail the response — the copy is for reviewing and re-sending later.
   try {
     const admin = createAdminClient();
-    const pdfPath = `${user.id}/consult-${randomUUID()}.pdf`;
-    const { error: uploadError } = await admin.storage
-      .from(BUCKET)
-      .upload(pdfPath, pdf, { contentType: "application/pdf" });
-    if (uploadError) throw uploadError;
+    const pdfPath = await storeConsultPdf(admin, user.id, pdf);
 
     const { error: rowError } = await admin
       .from("consult_requests")
-      .insert({ lead_id: data.lead_id, result_id: data.id, pdf_path: pdfPath });
+      .insert({ lead_id: found.leadId, result_id: found.resultId, pdf_path: pdfPath });
     if (rowError) throw rowError;
   } catch (error) {
     console.error("[consult] request sent but not recorded", {

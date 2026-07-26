@@ -46,6 +46,16 @@ export function AppHeader({
                 <Link className="opt" href="/articles">
                   Articles
                 </Link>
+                {/* A plain link, so the tab opens on the user's own click and no
+                    popup blocker sees it. The route writes the message itself. */}
+                <a
+                  className="btn btn-quiet"
+                  href="/api/consult/whatsapp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp<span className={s.whoTo}> Melvin</span>
+                </a>
               </>
             )}
 

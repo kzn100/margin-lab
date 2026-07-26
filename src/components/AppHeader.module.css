@@ -21,6 +21,14 @@
   top: 22px;
 }
 
+/* The button itself stays on a phone — that is where WhatsApp is easiest to
+   use. Only the name goes, to keep the nav on one line. */
+@media (max-width: 700px) {
+  .whoTo {
+    display: none;
+  }
+}
+
 /* Identity block, right of the nav links. */
 .who {
   display: flex;

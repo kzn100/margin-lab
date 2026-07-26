@@ -24,20 +24,22 @@ const num = (n: number) =>
 
 const pct = (n: number) => `${n.toFixed(1)}%`;
 
-export type ConsultRequest = {
+/** Who is asking. Known even for somebody who has not uploaded a P&L yet. */
+export type ConsultContact = {
   name: string;
   company: string;
   jobRole: string;
   mobile: string;
   email: string;
   requestedAt: string;
-  metrics: PnlMetrics;
 };
+
+export type ConsultRequest = ConsultContact & { metrics: PnlMetrics };
 
 /** Lines with a null in them are conditional and drop out; "" is a real blank. */
 const compact = (lines: (string | null)[]) => lines.filter((l): l is string => l !== null);
 
-const contactBlock = (req: ConsultRequest) => [
+const contactBlock = (req: ConsultContact) => [
   "CONTACT",
   `Name      ${req.name}`,
   `Company   ${req.company}`,
@@ -47,20 +49,28 @@ const contactBlock = (req: ConsultRequest) => [
   `Requested ${req.requestedAt}`,
 ];
 
-export function renderConsultRequestEmail(req: ConsultRequest) {
-  const { totals, margins, period, headline, revenueSplit } = req.metrics;
-
-  const lines = compact([
-    `${req.name} at ${req.company} has requested an RGM consultation.`,
-    "",
-    ...contactBlock(req),
-    "",
+/** The five figures that decide whether the conversation is worth having. */
+const headlineBlock = (metrics: PnlMetrics) => {
+  const { totals, margins, period } = metrics;
+  return [
     "HEADLINE",
     `Period           ${period.start} to ${period.end} (${period.months} months)`,
     `Revenue          ${money(totals.revenue)}`,
     `Gross profit     ${money(totals.grossProfit)}  (${margins.grossPct}%)`,
     `Operating profit ${money(totals.operatingProfit)}  (${margins.operatingPct}%)`,
     `Net profit       ${money(totals.netProfit)}  (${margins.netPct}%)`,
+  ];
+};
+
+export function renderConsultRequestEmail(req: ConsultRequest) {
+  const { headline, revenueSplit } = req.metrics;
+
+  const lines = compact([
+    `${req.name} at ${req.company} has requested an RGM consultation.`,
+    "",
+    ...contactBlock(req),
+    "",
+    ...headlineBlock(req.metrics),
     headline.biggestOpex
       ? `Biggest cost line: ${headline.biggestOpex.category}, ${headline.biggestOpex.pctOfRevenue}% of revenue.`
       : null,
@@ -80,6 +90,38 @@ export function renderConsultRequestEmail(req: ConsultRequest) {
     text: lines.join("\n"),
   };
 }
+
+/**
+ * The message a signed-in user sends to Melvin from the app header.
+ *
+ * Shorter than the email on purpose: it has to survive percent-encoding into a
+ * wa.me URL and be readable on a phone, so it carries the contact block and the
+ * headline only. The month-by-month detail is what the PDF is for.
+ *
+ * Both the metrics and the link are optional. Somebody who registered but has
+ * not uploaded yet still gets to start the conversation, and a storage failure
+ * downgrades the message rather than blocking it.
+ */
+export function renderConsultWhatsappText(
+  contact: ConsultContact,
+  metrics: PnlMetrics | null,
+  pdfUrl: string | null,
+) {
+  return compact([
+    metrics
+      ? "Hi Melvin, I would like a phone consultation about my P&L."
+      : "Hi Melvin, I would like a phone consultation. I have not uploaded a P&L yet.",
+    "",
+    ...contactBlock(contact),
+    ...(metrics ? ["", ...headlineBlock(metrics)] : []),
+    ...(pdfUrl ? ["", `Full analysis (link expires in ${PDF_LINK_DAYS} days):`, pdfUrl] : []),
+    "",
+    "Sent from Margin Lab",
+  ]).join("\n");
+}
+
+/** Stated in the message, so it has to match the expiry the route signs with. */
+export const PDF_LINK_DAYS = 7;
 
 /**
  * Column widths for the month-by-month table. They add up to 102 characters,

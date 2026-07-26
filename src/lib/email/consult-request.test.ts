@@ -6,6 +6,7 @@ import {
   consultPdfFilename,
   renderConsultRequestEmail,
   renderConsultRequestPdfLines,
+  renderConsultWhatsappText,
 } from "./consult-request.ts";
 import { MAX_CHARS } from "../pdf.ts";
 import type { PnlMetrics } from "../pnl/compute.ts";
@@ -109,6 +110,36 @@ test("the table stays inside the page width, even in the billions", () => {
     assert.ok(line.length <= MAX_CHARS, `${line.length}: ${line}`);
     assert.doesNotMatch(line, /\d,\d{3}[-\d]/, `columns collide: ${line}`);
   }
+});
+
+test("the whatsapp message carries the contact block, the headline and the link", () => {
+  const text = renderConsultWhatsappText(req, metrics, "https://example.test/signed.pdf");
+  assert.match(text, /Nurul Aziz/);
+  assert.match(text, /\+60123456789/);
+  assert.match(text, /RM 1,000,000/);
+  assert.match(text, /https:\/\/example\.test\/signed\.pdf/);
+  assert.doesNotMatch(text, /2024-02 {2,}600,000/, "the month table belongs in the PDF, not here");
+});
+
+test("a user with no analysis still gets a sendable message", () => {
+  const text = renderConsultWhatsappText(req, null, null);
+  assert.match(text, /have not uploaded a P&L yet/);
+  assert.match(text, /nurul@teratai\.com/);
+  assert.doesNotMatch(text, /HEADLINE/);
+  assert.doesNotMatch(text, /https?:/, "no link is offered when there is nothing to link to");
+});
+
+test("the message survives encoding into a wa.me url", () => {
+  // Browsers and WhatsApp both start truncating long URLs; a year of figures
+  // plus a signed link has to stay well inside that.
+  const year = JSON.parse(JSON.stringify(metrics)) as PnlMetrics;
+  year.monthly = Array.from({ length: 12 }, (_, i) =>
+    month(`2024-${String(i + 1).padStart(2, "0")}`, 1_000_000_000, 5),
+  );
+  const url = `https://wa.me/60133454628?text=${encodeURIComponent(
+    renderConsultWhatsappText(req, year, `https://example.test/${"s".repeat(300)}.pdf`),
+  )}`;
+  assert.ok(url.length < 2000, `${url.length} characters`);
 });
 
 test("the filename is safe and names the company and period", () => {
