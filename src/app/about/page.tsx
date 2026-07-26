@@ -15,6 +15,12 @@ export const metadata: Metadata = {
 const LINKEDIN_URL = "https://www.linkedin.com/in/kengzhing/";
 const WHATSAPP_URL = "https://wa.me/60128174628";
 
+/** Placeholder address — swap for the real Ara Damansara office details; the map follows it. */
+const OFFICE_ADDRESS =
+  "Unit 3-1, Level 3, Menara Ara Damansara, Jalan PJU 1A/7A, Ara Damansara, 47301 Petaling Jaya, Selangor, Malaysia";
+const MAP_SRC = `https://maps.google.com/maps?q=${encodeURIComponent(OFFICE_ADDRESS)}&z=16&output=embed`;
+const MAP_LINK = `https://maps.google.com/maps?q=${encodeURIComponent(OFFICE_ADDRESS)}`;
+
 /** Inline SVG so there is no client JS and no runtime call to a third-party QR API. */
 async function qr(url: string) {
   return QRCode.toString(url, {
@@ -183,7 +189,6 @@ export default async function AboutPage() {
               <h2>Get in touch</h2>
               <p className={styles.addr}>
                 <strong>Office</strong>
-                {/* Placeholder address — swap for the real Ara Damansara office details. */}
                 Unit 3-1, Level 3, Menara Ara Damansara
                 <br />
                 Jalan PJU 1A/7A, Ara Damansara
@@ -191,6 +196,19 @@ export default async function AboutPage() {
                 47301 Petaling Jaya, Selangor, Malaysia
               </p>
 
+              <iframe
+                className={styles.map}
+                src={MAP_SRC}
+                title="Map showing the Margin Lab office in Ara Damansara"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <a className={styles.mapLink} href={MAP_LINK} target="_blank" rel="noopener noreferrer">
+                Open in Google Maps
+              </a>
+            </div>
+
+            <div className={styles.contactCol}>
               <div className={styles.badgeWrap}>
                 <div
                   className="badge-base LI-profile-badge"
@@ -212,17 +230,17 @@ export default async function AboutPage() {
                 </div>
                 <Script src="https://platform.linkedin.com/badges/js/profile.js" strategy="lazyOnload" async />
               </div>
-            </div>
 
-            <div className={styles.qrRow}>
-              <a className={styles.qrTile} href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
-                <span dangerouslySetInnerHTML={{ __html: whatsappQr }} />
-                <span>Scan to WhatsApp</span>
-              </a>
-              <a className={styles.qrTile} href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
-                <span dangerouslySetInnerHTML={{ __html: linkedinQr }} />
-                <span>Scan to connect</span>
-              </a>
+              <div className={styles.qrRow}>
+                <a className={styles.qrTile} href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                  <span dangerouslySetInnerHTML={{ __html: whatsappQr }} />
+                  <span>Scan to WhatsApp</span>
+                </a>
+                <a className={styles.qrTile} href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+                  <span dangerouslySetInnerHTML={{ __html: linkedinQr }} />
+                  <span>Scan to connect</span>
+                </a>
+              </div>
             </div>
           </section>
 

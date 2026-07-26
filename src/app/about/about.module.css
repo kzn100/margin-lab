@@ -177,7 +177,7 @@
 .touch {
   margin-top: 40px;
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
+  grid-template-columns: 1.35fr 1fr;
   gap: 24px;
 }
 @media (max-width: 700px) {
@@ -203,6 +203,41 @@
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
+}
+
+.map {
+  margin-top: 14px;
+  display: block;
+  width: 100%;
+  height: 220px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+}
+/* Google's embed tiles are light-only, so damp them in dark mode. Mirrors the theme
+   selectors in tokens.css; a CSS filter cannot be driven by a custom property. */
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme="light"])) .map {
+    filter: grayscale(0.5) contrast(0.9) brightness(0.82);
+  }
+}
+:global(:root[data-theme="dark"]) .map {
+  filter: grayscale(0.5) contrast(0.9) brightness(0.82);
+}
+.mapLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.mapLink:hover {
+  color: var(--text-primary);
+}
+
+.contactCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
 }
 
 .qrRow {
@@ -231,9 +266,10 @@
   color: var(--text-muted);
 }
 
+/* min-height reserves space for the iframe LinkedIn's script injects, so it lands without shifting layout. */
 .badgeWrap {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 220px;
+  min-height: 200px;
 }
