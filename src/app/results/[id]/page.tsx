@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
+import { ConsultButton } from "@/components/ConsultButton";
 import { roleOf } from "@/lib/auth";
 import {
   MarginBridgeChart,
@@ -328,9 +329,14 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
                 the order worth doing.
               </p>
             </div>
-            <Link className="btn btn-primary" href="/dashboard">
-              Back to dashboard
-            </Link>
+            <div
+              style={{ display: "grid", gap: "10px", justifyItems: "stretch", textAlign: "center" }}
+            >
+              <ConsultButton resultId={data.id} />
+              <Link className="btn btn-ghost" href="/dashboard">
+                Back to dashboard
+              </Link>
+            </div>
           </div>
         </section>
       </main>

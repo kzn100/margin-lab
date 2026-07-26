@@ -47,9 +47,7 @@ export function renderConsultRequestEmail(req: ConsultRequest) {
     `Operating profit ${money(totals.operatingProfit)}  (${margins.operatingPct}%)`,
     `Net profit       ${money(totals.netProfit)}  (${margins.netPct}%)`,
     headline.biggestOpex
-      ? `Biggest cost line: ${headline.biggestOpex.category}, ${money(
-          headline.biggestOpex.amount,
-        )} — ${headline.biggestOpex.pctOfRevenue}% of revenue.`
+      ? `Biggest cost line: ${headline.biggestOpex.category}, ${headline.biggestOpex.pctOfRevenue}% of revenue.`
       : "",
     revenueSplit
       ? `Revenue moved ${money(revenueSplit.total)} a month: price ${money(
