@@ -50,13 +50,20 @@ function buildTransport() {
   });
 }
 
+/** Nodemailer's own attachment shape, passed through rather than wrapped. */
+export type Attachment = { filename: string; content: Buffer; contentType: string };
+
 export async function sendEmail(
   to: string,
   subject: string,
   text: string,
+  attachments?: Attachment[],
 ): Promise<SendResult> {
   if (!emailConfigured()) {
-    console.info(`[email] would send to ${to}\nsubject: ${subject}\n${text}\n[email] end`);
+    const files = (attachments ?? [])
+      .map((a) => `\n[email] attachment: ${a.filename} (${a.content.length} bytes)`)
+      .join("");
+    console.info(`[email] would send to ${to}\nsubject: ${subject}\n${text}${files}\n[email] end`);
     return { sent: false, error: "No SMTP_PASSWORD set — message logged, not sent." };
   }
   if (!user()) return { sent: false, error: "SMTP_PASSWORD is set but SMTP_USER is not." };
@@ -64,7 +71,7 @@ export async function sendEmail(
   try {
     const transport = buildTransport();
     try {
-      await transport.sendMail({ from: from(), to, subject, text });
+      await transport.sendMail({ from: from(), to, subject, text, attachments });
     } finally {
       transport.close();
     }

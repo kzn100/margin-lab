@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
-import { renderConsultRequestEmail } from "@/lib/email/consult-request";
+import {
+  consultPdfFilename,
+  consultPdfTitle,
+  renderConsultRequestEmail,
+  renderConsultRequestPdfLines,
+} from "@/lib/email/consult-request";
 import { sendEmail } from "@/lib/email/send";
+import { renderTextPdf } from "@/lib/pdf";
 import type { PnlMetrics } from "@/lib/pnl/compute";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,19 +51,22 @@ export async function POST(request: Request) {
     email: string;
   } | null;
 
-  const origin = new URL(request.url).origin;
-  const mail = renderConsultRequestEmail({
+  const consult = {
     name: lead?.name ?? ((user.user_metadata?.name as string | undefined) ?? "Unknown"),
     company: lead?.company ?? ((user.user_metadata?.company as string | undefined) ?? "Unknown"),
     jobRole: lead?.job_role ?? "",
     mobile: lead?.mobile ?? "",
     email: lead?.email ?? user.email ?? "",
-    resultUrl: `${origin}/results/${data.id}`,
     requestedAt: new Date().toISOString(),
     metrics: data.metrics as unknown as PnlMetrics,
-  });
+  };
 
-  const sent = await sendEmail(CONSULT_TO, mail.subject, mail.text);
+  const mail = renderConsultRequestEmail(consult);
+  const pdf = renderTextPdf(consultPdfTitle(consult), renderConsultRequestPdfLines(consult));
+
+  const sent = await sendEmail(CONSULT_TO, mail.subject, mail.text, [
+    { filename: consultPdfFilename(consult), content: pdf, contentType: "application/pdf" },
+  ]);
   if (!sent.sent) {
     // The user gets a real failure rather than a false "we'll be in touch" —
     // nothing else records the request, so a silent drop would lose the lead.
