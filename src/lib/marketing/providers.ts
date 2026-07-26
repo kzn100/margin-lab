@@ -1,13 +1,11 @@
+import { emailConfigured, sendViaResend } from "@/lib/email/send";
 import { renderTemplate, type SegmentLead } from "./segment";
 
 /**
- * Outbound message channels.
- *
- * Two channels, no live provider between them: WhatsApp is undecided (Twilio vs
- * Meta Cloud API) and email has none wired. Both render the message per lead
- * and log it, so the composer, the personalisation and the campaign audit trail
- * are exercised on every send. Wiring a provider means replacing one function
- * body — nothing above this file changes.
+ * Outbound message channels. Email goes through Resend; WhatsApp is still
+ * undecided (Twilio vs Meta Cloud API) and renders to the log instead, so the
+ * composer, the personalisation and the campaign audit trail are exercised
+ * either way.
  */
 
 export type SendOutcome = {
@@ -17,7 +15,7 @@ export type SendOutcome = {
   blocked?: string;
 };
 
-export const emailConfigured = () => Boolean(process.env.RESEND_API_KEY);
+export { emailConfigured };
 
 /** none | twilio | meta — only "none" is implemented. */
 export const whatsappProvider = () => process.env.WHATSAPP_PROVIDER ?? "none";
@@ -43,10 +41,24 @@ export async function sendEmailBlast(
     };
   }
 
-  // ponytail: when a provider is chosen, send per lead here and count the
-  // failures. Kept sequential-friendly on purpose — a blast of 500 wants a
-  // queue, not a Promise.all against a rate limit.
-  throw new Error("An email provider is configured but no send implementation is wired yet.");
+  // Sequential on purpose: a blast of 500 against Resend's rate limit wants a
+  // queue, not a Promise.all.
+  // ponytail: fine to a few hundred leads; move to a queue past that.
+  let sent = 0;
+  let failed = 0;
+  for (const lead of leads) {
+    const result = await sendViaResend(
+      lead.email,
+      renderTemplate(subject, lead),
+      renderTemplate(body, lead),
+    );
+    if (result.sent) sent++;
+    else {
+      failed++;
+      console.error("[email-blast] send failed", { to: lead.email, error: result.error });
+    }
+  }
+  return { sent, failed };
 }
 
 export async function sendWhatsappBlast(

@@ -24,6 +24,7 @@ export type Database = {
           mobile: string
           name: string
           pnl_type: string
+          upload_nudge_sent_at: string | null
           user_id: string
         }
         Insert: {
@@ -35,6 +36,7 @@ export type Database = {
           mobile: string
           name: string
           pnl_type: string
+          upload_nudge_sent_at?: string | null
           user_id: string
         }
         Update: {
@@ -46,6 +48,7 @@ export type Database = {
           mobile?: string
           name?: string
           pnl_type?: string
+          upload_nudge_sent_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -147,6 +150,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      signup_starts: {
+        Row: {
+          created_at: string
+          email: string
+          followed_up_at: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          followed_up_at?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          followed_up_at?: string | null
+          id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

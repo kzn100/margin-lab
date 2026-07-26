@@ -1,12 +1,8 @@
+import { sendViaResend } from "@/lib/email/send";
 import type { PnlMetrics } from "@/lib/pnl/compute";
 
 /**
  * Emails a lead their analysis summary.
- *
- * No provider is wired: Netlify Forms cannot send a templated message to each
- * lead's own address, and Resend was declined. Until a provider is chosen this
- * renders the message and logs it, so the step exists, is exercised on every
- * registration, and the swap is one fetch call inside `deliver`.
  *
  * Never throws. By the time this runs the lead has already handed over their
  * P&L and the analysis is saved — losing the registration because an email API
@@ -76,9 +72,6 @@ function renderResultsEmail({
 }
 
 async function deliver(to: string, message: { subject: string; text: string }) {
-  // ponytail: log-only sink. Replace this body with the provider's send call —
-  // everything above is provider-agnostic and stays as is.
-  console.info(
-    `[email] would send to ${to}\nsubject: ${message.subject}\n${message.text}\n[email] end`,
-  );
+  const result = await sendViaResend(to, message.subject, message.text);
+  if (!result.sent) console.error("[email] results email not sent", { to, error: result.error });
 }

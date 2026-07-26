@@ -17,6 +17,8 @@ const ROLES = [
   "Other",
 ];
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 type Errors = Partial<Record<string, string>>;
 
 /** 0–3. Length carries most of the weight; character classes are the tiebreak. */
@@ -59,6 +61,8 @@ export function RegisterForm() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  /** Last address sent to /api/signup-start, so a blur with no edit is a no-op. */
+  const captured = useRef<string | null>(null);
 
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -85,7 +89,7 @@ export function RegisterForm() {
     setFile(f);
   }
 
-  function validate(data: FormData): Errors {
+  function validate(data: FormData, requireFile: boolean): Errors {
     const next: Errors = {};
     const req = (k: string, msg: string) => {
       if (!String(data.get(k) ?? "").trim()) next[k] = msg;
@@ -96,36 +100,57 @@ export function RegisterForm() {
     req("mobile", "Enter a mobile number we can reach you on.");
 
     const email = String(data.get("email") ?? "");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = "Enter a valid email address.";
+    if (!EMAIL_RE.test(email)) next.email = "Enter a valid email address.";
 
     const pw = String(data.get("password") ?? "");
     if (pw.length < 8) next.password = "Use at least 8 characters.";
 
-    if (!file) next.file = "Attach your P&L file.";
+    if (requireFile && !file) next.file = "Attach your P&L file.";
     return next;
   }
 
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (submitting) return;
+  /**
+   * Captures the address before submit so an abandoned signup can be followed
+   * up. Fire-and-forget on purpose: it must never block or slow the form, and
+   * the user is told nothing either way.
+   */
+  function captureEmail(value: string) {
+    const email = value.trim().toLowerCase();
+    if (!EMAIL_RE.test(email) || email === captured.current) return;
+    captured.current = email;
+    void fetch("/api/signup-start", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ email }),
+    }).catch(() => {});
+  }
 
-    const data = new FormData(event.currentTarget);
-    const found = validate(data);
+  async function submit(withFile: boolean) {
+    if (submitting || !formRef.current) return;
+
+    const data = new FormData(formRef.current);
+    const found = validate(data, withFile);
     setErrors(found);
     setBanner(null);
     if (Object.keys(found).length) {
-      formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
+      formRef.current.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
       return;
     }
 
     // The <input type="file"> is not inside the form's own data when the user
     // dropped it, so attach the tracked File explicitly.
-    data.set("file", file!, file!.name);
+    if (withFile && file) data.set("file", file, file.name);
+    else data.delete("file");
 
     setSubmitting(true);
     try {
       const res = await fetch("/api/register", { method: "POST", body: data });
-      const body = (await res.json()) as { resultId?: string; error?: string; field?: string };
+      const body = (await res.json()) as {
+        resultId?: string;
+        redirect?: string;
+        error?: string;
+        field?: string;
+      };
 
       if (!res.ok) {
         if (body.field) setErrors({ [body.field]: body.error ?? "That did not work." });
@@ -135,7 +160,7 @@ export function RegisterForm() {
       }
       // Deliberately not clearing `submitting`: the button stays busy through
       // the navigation so a double-click cannot fire a second registration.
-      router.push(`/results/${body.resultId}`);
+      router.push(body.redirect ?? `/results/${body.resultId}`);
     } catch {
       setBanner("We could not reach the server. Check your connection and try again.");
       setSubmitting(false);
@@ -154,7 +179,14 @@ export function RegisterForm() {
         </div>
       )}
 
-      <form ref={formRef} onSubmit={onSubmit} noValidate>
+      <form
+        ref={formRef}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit(true);
+        }}
+        noValidate
+      >
         <div className={s.pair}>
           <div className={fieldClass("name")}>
             <label htmlFor="regName">Full name</label>
@@ -249,6 +281,7 @@ export function RegisterForm() {
             placeholder="you@company.com.my"
             aria-invalid={invalid("email")}
             disabled={submitting}
+            onBlur={(e) => captureEmail(e.target.value)}
           />
           {errors.email && (
             <p className="err">
@@ -445,6 +478,18 @@ export function RegisterForm() {
           ) : (
             "Get my free analysis"
           )}
+        </button>
+
+        {/* Secondary on purpose: the upload is the point, so skipping it should
+            be a deliberate choice rather than a field the user can just miss. */}
+        <button
+          className="btn btn-quiet btn-block"
+          type="button"
+          disabled={submitting}
+          onClick={() => void submit(false)}
+          style={{ marginTop: 8 }}
+        >
+          Create my account, I&apos;ll upload later
         </button>
 
         <p className={s.legal}>

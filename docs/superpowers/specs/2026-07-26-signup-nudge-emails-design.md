@@ -110,7 +110,7 @@ New module `src/lib/email/send.ts` exporting `sendViaResend(to, subject, text)`,
 using Resend's HTTP API (`POST https://api.resend.com/emails`) rather than SMTP —
 one `fetch`, no SMTP client dependency.
 
-Reads `RESEND_API_KEY` and `EMAIL_FROM` from the environment. When
+Reads `RESEND_API_KEY` and `RESEND_FROM` from the environment. When
 `RESEND_API_KEY` is unset it keeps today's behaviour: render, log, report not-sent.
 That keeps local development and CI working without credentials, and matches the
 existing stubs' contract.
@@ -123,7 +123,7 @@ Existing callers are repointed at it:
   admin marketing panel. Sending the nudge emails while leaving those two paths
   stubbed would ship an inconsistent state.
 
-`EMAIL_FROM` and `RESEND_API_KEY` go in Netlify's environment variables. This is
+`RESEND_FROM` and `RESEND_API_KEY` go in Netlify's environment variables. This is
 distinct from the SMTP settings already configured in Supabase, which only cover
 Supabase Auth's own emails (password recovery, confirmations).
 
@@ -175,7 +175,9 @@ manually against the running app instead.
   writes a row per unique email. Worst case is a nudge sent to a bogus address,
   and the same abuse can already be aimed at `/api/register`. Add a per-IP limit
   if it is ever actually abused.
-- **Nudges are not backfilled.** Only accounts and captures created after this
-  ships are eligible, since existing `leads` predate the new column.
+- **Pre-existing leads are eligible in principle, but none qualify.** The new
+  column is null for every existing row, so the scheduler does consider them —
+  but registration required a file until now, so every one of them already has
+  an upload and is filtered out. Verified against the live table before ship.
 - **One shared send path, no per-message retry.** A failed send waits for the
   next 30-minute run.

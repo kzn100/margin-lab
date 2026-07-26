@@ -50,22 +50,26 @@ export async function POST(request: Request) {
   if (password.length < 8)
     return fail({ error: "Use at least 8 characters.", field: "password" });
   if (!PNL_TYPES.has(pnlType)) return fail({ error: "Choose which P&L you are uploading." });
-  if (!(file instanceof File) || file.size === 0)
-    return fail({ error: "Attach your P&L file.", field: "file" });
-  if (file.size > MAX_BYTES)
+
+  // The file is optional: an account can be created now and the P&L uploaded
+  // later from the dashboard. Everything downstream branches on this.
+  const hasFile = file instanceof File && file.size > 0;
+  if (hasFile && file.size > MAX_BYTES)
     return fail({ error: "That file is over 5 MB. Export just the P&L sheet.", field: "file" });
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = hasFile ? Buffer.from(await file.arrayBuffer()) : null;
 
   // Parse before creating anything. A rejected file should not leave an orphan
   // account behind that blocks the user from retrying with the same email.
   let metrics;
-  try {
-    metrics = computeMetrics(await parsePnl(buffer, file.name));
-  } catch (error) {
-    if (error instanceof PnlParseError) return fail({ error: error.message, field: "file" });
-    console.error("[register] unexpected parse failure", error);
-    return fail({ error: "We could not read that file. Check it against the template.", field: "file" });
+  if (hasFile && buffer) {
+    try {
+      metrics = computeMetrics(await parsePnl(buffer, file.name));
+    } catch (error) {
+      if (error instanceof PnlParseError) return fail({ error: error.message, field: "file" });
+      console.error("[register] unexpected parse failure", error);
+      return fail({ error: "We could not read that file. Check it against the template.", field: "file" });
+    }
   }
 
   const admin = createAdminClient();
@@ -116,6 +120,20 @@ export async function POST(request: Request) {
     .single();
   if (leadError || !lead) return abort("lead insert failed", leadError);
 
+  // Sign in so the cookie session exists either way. Shared by both branches;
+  // uses the cookie-bound client, not the admin one.
+  const signIn = async () => {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    // The account is saved either way — send them to log in rather than lose it.
+    if (error) console.error("[register] post-signup sign-in failed", error.message);
+  };
+
+  if (!hasFile || !buffer || !metrics) {
+    await signIn();
+    return NextResponse.json({ redirect: "/dashboard" });
+  }
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-80);
   const path = `${userId}/${lead.id}-${safeName}`;
   const { error: uploadError } = await admin.storage
@@ -137,14 +155,8 @@ export async function POST(request: Request) {
     .single();
   if (resultError || !result) return abort("result insert failed", resultError);
 
-  // Sign in so the cookie session exists and RLS lets them read their own
-  // result on the next page. Uses the cookie-bound client, not the admin one.
-  const supabase = await createClient();
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-  if (signInError) {
-    // The analysis is saved either way — send them to log in rather than lose it.
-    console.error("[register] post-signup sign-in failed", signInError.message);
-  }
+  // RLS lets them read their own result on the next page once signed in.
+  await signIn();
 
   const origin = new URL(request.url).origin;
   await sendResultsEmail({
