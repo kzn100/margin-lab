@@ -17,30 +17,37 @@ import nodemailer from "nodemailer";
 
 export type SendResult = { sent: boolean; error?: string };
 
-export const emailConfigured = () => Boolean(process.env.SMTP_PASSWORD);
+export const emailConfigured = () => Boolean(password());
 
 const user = () => process.env.SMTP_USER ?? "";
 const from = () => process.env.EMAIL_FROM ?? `Margin Lab <${user()}>`;
 
 /**
- * Pooled and built once per warm instance. A blast sends sequentially, and a
- * fresh TCP + TLS + AUTH handshake per message is the slow part of SMTP.
+ * Google shows an App Password as "abcd efgh ijkl mnop" and people paste it
+ * exactly that way. Sent verbatim, SMTP AUTH fails with "535 Username and
+ * Password not accepted" — which reads like the wrong password, not the right
+ * one with spaces in it. Strip them here so that trap cannot be fallen into.
  */
-let transporter: nodemailer.Transporter | null = null;
+const password = () => (process.env.SMTP_PASSWORD ?? "").replace(/\s+/g, "");
 
-function getTransporter() {
-  if (transporter) return transporter;
+/**
+ * Deliberately unpooled. A pooled transporter holds its socket and keepalive
+ * timer open, which stops the event loop draining — in the scheduled function
+ * that means hanging until the platform timeout on every run, long after the
+ * mail has gone. One connection per message costs a handshake we can afford at
+ * this volume.
+ * ponytail: revisit if a blast ever gets big enough for the handshakes to hurt,
+ * and close the pool explicitly when it does.
+ */
+function buildTransport() {
   const port = Number(process.env.SMTP_PORT ?? 465);
-  transporter = nodemailer.createTransport({
+  return nodemailer.createTransport({
     host: process.env.SMTP_HOST ?? "smtp.gmail.com",
     port,
     // 465 is implicit TLS; 587 starts plaintext and upgrades via STARTTLS.
     secure: port === 465,
-    auth: { user: user(), pass: process.env.SMTP_PASSWORD },
-    pool: true,
-    maxConnections: 1,
+    auth: { user: user(), pass: password() },
   });
-  return transporter;
 }
 
 export async function sendEmail(
@@ -55,7 +62,12 @@ export async function sendEmail(
   if (!user()) return { sent: false, error: "SMTP_PASSWORD is set but SMTP_USER is not." };
 
   try {
-    await getTransporter().sendMail({ from: from(), to, subject, text });
+    const transport = buildTransport();
+    try {
+      await transport.sendMail({ from: from(), to, subject, text });
+    } finally {
+      transport.close();
+    }
     return { sent: true };
   } catch (error) {
     return { sent: false, error: error instanceof Error ? error.message : String(error) };

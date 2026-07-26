@@ -129,9 +129,16 @@ Workspace rejects the account password for SMTP. When it is unset the module
 renders, logs and reports not-sent, so local development and CI work without
 credentials — the same contract the previous stubs had.
 
-The transporter is pooled and built once per warm instance: a blast sends
-sequentially, and a fresh TCP + TLS + AUTH handshake per message is the slow
-part of SMTP.
+The App Password is stripped of whitespace before use. Google displays it as
+four space-separated groups and it gets pasted that way; sent verbatim, SMTP
+rejects it with "535 Username and Password not accepted", which reads like the
+wrong password rather than the right one with spaces in it.
+
+The transport is built per message and closed after, deliberately unpooled. A
+pooled transporter holds its socket and keepalive timer open, so the event loop
+never drains and the scheduled function hangs until the platform timeout on
+every run — long after the mail has gone. One handshake per message is
+affordable at this volume.
 
 Existing callers are repointed at it:
 
