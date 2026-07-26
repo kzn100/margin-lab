@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import "./tokens.css";
 
 export const metadata: Metadata = {
-  title: "Margin Lab — Free P&L Analysis",
+  title: {
+    default: "Margin Lab · Free P&L analysis",
+    template: "%s · Margin Lab",
+  },
   description:
-    "Upload your P&L, get a revenue growth management analysis back in minutes.",
+    "Upload your P&L and get a revenue growth management analysis back in minutes.",
 };
 
 export default function RootLayout({
