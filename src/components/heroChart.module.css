@@ -1,0 +1,61 @@
+/* Only the parts the static hero card did not already need. The card, its head
+   and its note come from marketing.module.css, unchanged. */
+
+.plot {
+  animation: slideIn 0.45s ease-out;
+}
+
+/* Reserve the note's height so a two-line story does not shove the dots down
+   and make the whole card jump on every cycle. */
+.note {
+  min-height: 2.8em;
+}
+/* The same sentence takes a line more on a phone. */
+@media (max-width: 620px) {
+  .note {
+    min-height: 4.2em;
+  }
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.dot {
+  width: 22px;
+  height: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dot:hover {
+  background: var(--text-muted);
+}
+.dot[aria-current] {
+  background: var(--accent);
+}
+/* The bar itself is 4px tall; the tap target has to be a finger. */
+.dot::after {
+  content: "";
+  display: block;
+  height: 24px;
+  margin-top: -10px;
+}
+
+.illustrative {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+  }
+}

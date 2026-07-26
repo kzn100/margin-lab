@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
 import { ArticleCard } from "@/components/ArticleCard";
-import { MarginBridgeChart, MarginLadderChart, RevenueSplitChart } from "@/components/Charts";
+import { MarginLadderChart, RevenueSplitChart } from "@/components/Charts";
+import { HeroChart } from "@/components/HeroChart";
 import { ARTICLES } from "@/lib/articles";
 import styles from "./marketing.module.css";
 
@@ -32,16 +33,7 @@ export default function Home() {
               </div>
             </div>
 
-            <figure className={styles.heroChart}>
-              <figcaption className={styles.heroChartHead}>
-                <strong>Where the revenue went</strong>
-                <span>RM &apos;000</span>
-              </figcaption>
-              <MarginBridgeChart />
-              <p className={styles.heroChartNote}>
-                A real analysis. RM 6.03M of revenue leaves RM 240k of net profit.
-              </p>
-            </figure>
+            <HeroChart />
           </div>
 
           <div className={styles.proof}>

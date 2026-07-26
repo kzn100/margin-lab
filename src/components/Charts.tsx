@@ -12,6 +12,7 @@
 
 import { useCallback } from "react";
 import { useEffect, useRef } from "react";
+import anim from "./charts.module.css";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const NARROW = 560;
@@ -31,7 +32,15 @@ function text(
   x: number,
   y: number,
   str: string | number,
-  o: { size?: number; weight?: number; fill?: string; anchor?: string; tabular?: boolean } = {},
+  o: {
+    size?: number;
+    weight?: number;
+    fill?: string;
+    anchor?: string;
+    tabular?: boolean;
+    /** Position in the series, so labels resolve with their own geometry. */
+    i?: number;
+  } = {},
 ) {
   const t = el(
     "text",
@@ -40,15 +49,20 @@ function text(
       y,
       fill: o.fill ?? "var(--text-muted)",
       "text-anchor": o.anchor ?? "middle",
+      class: anim.fade,
       style:
         `font-size:${o.size ?? 12}px;font-weight:${o.weight ?? 500};` +
-        (o.tabular ? "font-variant-numeric:tabular-nums;" : ""),
+        (o.tabular ? "font-variant-numeric:tabular-nums;" : "") +
+        (o.i === undefined ? "" : `--i:${o.i};`),
     },
     parent,
   );
   t.textContent = String(str);
   return t;
 }
+
+/** Shorthand for the two attributes every animated shape carries. */
+const animated = (name: string, i: number) => ({ class: name, style: `--i:${i};` });
 
 /** 4px rounded data-end, square at the baseline. */
 function barPath(x: number, y: number, w: number, h: number, r: number, dir: "up" | "down") {
@@ -151,6 +165,24 @@ function ResponsiveChart({
     ro.observe(svg);
     return () => ro.disconnect();
   }, [draw, heightFor]);
+
+  // The entrance animation is armed by a class rather than played on mount, so
+  // a chart three screens down does not animate to nobody and arrive static.
+  // Once armed it stays armed: this fires once and disconnects.
+  useEffect(() => {
+    const svg = ref.current;
+    if (!svg || svg.classList.contains(anim.animated)) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        svg.classList.add(anim.animated);
+        io.disconnect();
+      },
+      { threshold: 0.15 },
+    );
+    io.observe(svg);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <svg
@@ -281,9 +313,16 @@ export function MarginBridgeChart({ data = SAMPLE_BRIDGE }: { data?: BridgeStep[
           );
         }
 
+        const up = s.end >= s.start;
         el(
           "path",
-          { d: barPath(x, top, BW, Math.max(h, 2), 4, s.end >= s.start ? "up" : "down"), fill },
+          {
+            d: barPath(x, top, BW, Math.max(h, 2), 4, up ? "up" : "down"),
+            fill,
+            // A decrement hangs off the running total above it, so it has to
+            // grow downward or it detaches from the step it belongs to.
+            ...animated(up ? anim.grow : anim.growDown, i),
+          },
           svg,
         );
 
@@ -293,11 +332,13 @@ export function MarginBridgeChart({ data = SAMPLE_BRIDGE }: { data?: BridgeStep[
             weight: 600,
             fill: "var(--text-primary)",
             tabular: true,
+            i,
           });
         }
         text(svg, cx, M.t + ih + 20, narrow ? (ABBR[s.label] ?? s.label) : s.label, {
           size: narrow ? 11 : 12,
           fill: "var(--text-secondary)",
+          i,
         });
       });
     },
@@ -378,7 +419,7 @@ export function MarginLadderChart({ data = SAMPLE_LADDER }: { data?: LadderData 
         { values: data.operating, color: "var(--s2)" },
         { values: data.net, color: "var(--s3)" },
       ];
-      for (const s of series) {
+      series.forEach((s, si) => {
         const d = s.values
           .map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`)
           .join(" ");
@@ -392,6 +433,10 @@ export function MarginLadderChart({ data = SAMPLE_LADDER }: { data?: LadderData 
             "stroke-linejoin": "round",
             "stroke-linecap": "round",
             "vector-effect": "non-scaling-stroke",
+            // Normalises the path to a length of 1 so the draw-in dash needs no
+            // getTotalLength() call.
+            pathLength: 1,
+            ...animated(anim.line, si * 2),
           },
           svg,
         );
@@ -405,10 +450,12 @@ export function MarginLadderChart({ data = SAMPLE_LADDER }: { data?: LadderData 
             stroke: "var(--surface)",
             "stroke-width": 2,
             "vector-effect": "non-scaling-stroke",
+            // Lands after its own line has finished drawing.
+            ...animated(anim.dot, si * 2 + 18),
           },
           svg,
         );
-      }
+      });
     },
     [data],
   );
@@ -476,6 +523,8 @@ export function RevenueSplitChart({ data = SAMPLE_SPLIT }: { data?: SplitItem[] 
           {
             d: pos ? barRight(x0, y, len, BH, 4) : barLeft(x0, y, len, BH, 4),
             fill: pos ? "var(--good)" : "var(--critical)",
+            // Both directions grow out of the zero line, never out of thin air.
+            ...animated(pos ? anim.growRight : anim.growLeft, i),
           },
           svg,
         );
@@ -484,6 +533,7 @@ export function RevenueSplitChart({ data = SAMPLE_SPLIT }: { data?: SplitItem[] 
           size: narrow ? 12 : 13,
           weight: 600,
           fill: "var(--text-primary)",
+          i,
         });
         text(svg, pos ? x1 + 8 : x1 - 8, y + BH / 2 + 4, fmtSigned(s.value / scale.div), {
           anchor: pos ? "start" : "end",
@@ -491,6 +541,7 @@ export function RevenueSplitChart({ data = SAMPLE_SPLIT }: { data?: SplitItem[] 
           weight: 600,
           fill: "var(--text-primary)",
           tabular: true,
+          i,
         });
       });
     },
@@ -561,6 +612,7 @@ export function RevenueTrendChart({
           {
             d: barPath(cx - BW / 2, top, BW, Math.max(h, 2), 4, v >= 0 ? "up" : "down"),
             fill: "var(--s1)",
+            ...animated(v >= 0 ? anim.grow : anim.growDown, i),
           },
           svg,
         );
@@ -568,6 +620,7 @@ export function RevenueTrendChart({
           text(svg, cx, M.t + ih + 20, monthLabel(data.months[i]), {
             size: narrow ? 11 : 12,
             fill: "var(--text-secondary)",
+            i,
           });
         }
       });
@@ -636,6 +689,7 @@ export function LeadsPerWeekChart({
             // to the completed ones. Hatching would need a pattern def; opacity
             // says "provisional" with no extra machinery.
             "fill-opacity": d.partial ? 0.45 : 1,
+            ...animated(anim.grow, i),
           },
           svg,
         );
@@ -643,6 +697,7 @@ export function LeadsPerWeekChart({
           text(svg, cx, M.t + ih + 20, weekLabel(d.weekStart), {
             size: narrow ? 10 : 11,
             fill: "var(--text-secondary)",
+            i,
           });
         }
       });
@@ -699,7 +754,11 @@ export function OpexBreakdownChart({
           "path",
           // Fixed order, never cycled: the largest category is always s1, so
           // the eye lands on the biggest lever first.
-          { d: barRight(M.l, y, len, BH, 4), fill: `var(--s${Math.min(i + 1, 8)})` },
+          {
+            d: barRight(M.l, y, len, BH, 4),
+            fill: `var(--s${Math.min(i + 1, 8)})`,
+            ...animated(anim.growRight, i),
+          },
           svg,
         );
         text(svg, M.l - 10, y + BH / 2 + 4, d.category, {
@@ -707,6 +766,7 @@ export function OpexBreakdownChart({
           size: narrow ? 12 : 13,
           weight: 600,
           fill: "var(--text-primary)",
+          i,
         });
         text(svg, M.l + len + 8, y + BH / 2 + 4, `${d.pctOfRevenue.toFixed(1)}%`, {
           anchor: "start",
@@ -714,6 +774,7 @@ export function OpexBreakdownChart({
           weight: 600,
           fill: "var(--text-secondary)",
           tabular: true,
+          i,
         });
       });
     },

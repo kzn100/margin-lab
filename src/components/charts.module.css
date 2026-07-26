@@ -1,0 +1,115 @@
+/*
+ * Entrance animation for every chart.
+ *
+ * CSS rather than a requestAnimationFrame loop: the charts already build their
+ * SVG through el(), so a class name at creation is the whole integration, and
+ * the prefers-reduced-motion rule in tokens.css neutralises all of this for
+ * free. A JS loop would have had to check that itself.
+ *
+ * Nothing plays until .animated lands on the <svg>, which happens the first
+ * time it is scrolled into view.
+ */
+
+.animated .grow,
+.animated .growDown,
+.animated .growRight,
+.animated .growLeft,
+.animated .line,
+.animated .dot,
+.animated .fade {
+  /* Elements pass their position in the series as --i, so a chart resolves
+     left to right instead of all at once. */
+  animation-delay: calc(var(--i, 0) * 45ms);
+  animation-fill-mode: backwards;
+}
+
+/* fill-box so the origin is the shape itself, not the whole SVG canvas. */
+.grow,
+.growDown,
+.growRight,
+.growLeft,
+.dot {
+  transform-box: fill-box;
+}
+
+.grow {
+  transform-origin: bottom;
+}
+/* Bridge decrements hang down from the running total, so they grow downward. */
+.growDown {
+  transform-origin: top;
+}
+.growRight {
+  transform-origin: left;
+}
+.growLeft {
+  transform-origin: right;
+}
+.dot {
+  transform-origin: center;
+}
+
+/* pathLength normalises every path to 1, so the dash needs no measuring. */
+.line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+.animated .grow,
+.animated .growDown {
+  animation-name: growY;
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.2, 0.75, 0.3, 1);
+}
+
+.animated .growRight,
+.animated .growLeft {
+  animation-name: growX;
+  animation-duration: 0.55s;
+  animation-timing-function: cubic-bezier(0.2, 0.75, 0.3, 1);
+}
+
+.animated .line {
+  animation-name: draw;
+  animation-duration: 0.9s;
+  animation-timing-function: ease-out;
+}
+
+.animated .dot {
+  animation-name: pop;
+  animation-duration: 0.35s;
+  animation-timing-function: cubic-bezier(0.2, 1.4, 0.5, 1);
+}
+
+.animated .fade {
+  animation-name: fade;
+  animation-duration: 0.5s;
+  animation-timing-function: ease-out;
+}
+
+@keyframes growY {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes growX {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}

@@ -62,7 +62,7 @@ export const ARTICLES: Article[] = [
     readMinutes: 6,
     image: "growing-broke-revenue-up-margin-down",
     imageAlt:
-      "Two rising bar charts, the left one crumbling away at the base as it climbs",
+      "A long supermarket checkout queue of heaped trolleys at peak hour",
     body: [
       {
         kind: "p",
@@ -178,7 +178,7 @@ export const ARTICLES: Article[] = [
     readMinutes: 7,
     image: "promo-that-pays-baseline-subsidy",
     imageAlt:
-      "A discount tag raining coins over shopping baskets that are already full and walking away",
+      "A blank red promotional flag on a shelf that is still completely full",
     body: [
       {
         kind: "p",
@@ -288,7 +288,7 @@ export const ARTICLES: Article[] = [
     readMinutes: 8,
     image: "price-pack-architecture-two-sides",
     imageAlt:
-      "Three cup sizes on a glass shelf with a hidden cost curve machined into the surface beneath them",
+      "Three shelves of the same product in three sizes, the middle row untouched while the others are picked over",
     body: [
       {
         kind: "p",
@@ -433,7 +433,7 @@ export const ARTICLES: Article[] = [
     date: "14 Jul 2026",
     readMinutes: 7,
     image: "price-volume-mix",
-    imageAlt: "Packaged goods on a wholesale shelf, price labels facing forward",
+    imageAlt: "A warehouse worker reaching up to a carton in a wholesale aisle stacked high with plain boxes",
     body: [
       {
         kind: "p",
@@ -510,7 +510,7 @@ export const ARTICLES: Article[] = [
     date: "28 Jun 2026",
     readMinutes: 6,
     image: "opex-ratio",
-    imageAlt: "Warehouse aisle with pallet racking",
+    imageAlt: "The back-of-house service corridor of a shop: racking, trolleys, crates and cabling",
     body: [
       {
         kind: "p",
@@ -544,7 +544,7 @@ export const ARTICLES: Article[] = [
     date: "09 Jun 2026",
     readMinutes: 4,
     image: "reading-a-pnl-bridge",
-    imageAlt: "Printed financial statement on a desk",
+    imageAlt: "Printed financial statements fanned across a desk under a lamp in a factory office at night",
     body: [
       {
         kind: "p",
@@ -573,7 +573,7 @@ export const ARTICLES: Article[] = [
     date: "21 May 2026",
     readMinutes: 8,
     image: "when-a-discount-pays",
-    imageAlt: "Wholesale market stall with produce crates",
+    imageAlt: "A hand holding a label gun against a shelf edge, a blank price label curling off the roll",
     body: [
       {
         kind: "p",
