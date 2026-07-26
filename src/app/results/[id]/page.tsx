@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Brand } from "@/components/Brand";
+import { AppHeader } from "@/components/AppHeader";
+import { roleOf } from "@/lib/auth";
 import {
   MarginBridgeChart,
   MarginLadderChart,
@@ -62,14 +63,11 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <header className="hdr">
-        <div className="wrap">
-          <Brand />
-          <nav>
-            <Link href="/dashboard">Dashboard</Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader
+        role={roleOf(user)}
+        name={user.user_metadata?.name as string | undefined}
+        email={user.email ?? ""}
+      />
 
       <main className="wrap" style={{ paddingBlock: "28px 80px" }}>
         <div className="pagehead">
@@ -326,7 +324,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
               <h2>Want the levers ranked, with the workings?</h2>
               <p>
                 This analysis shows where the margin sits. A revenue growth management review turns
-                it into a priced list of moves — pricing, mix, promotional spend, cost lines — in
+                it into a priced list of moves (pricing, mix, promotional spend, cost lines) in
                 the order worth doing.
               </p>
             </div>

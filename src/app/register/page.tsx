@@ -61,16 +61,16 @@ export default function RegisterPage() {
 
             <div className={s.proof}>
               <div>
-                <div className="v">4.2pp</div>
-                <div className="k">Median net margin gain in year one</div>
+                <div className={s.v}>4.2pp</div>
+                <div className={s.k}>Median net margin gain in year one</div>
               </div>
               <div>
-                <div className="v">RM 6M</div>
-                <div className="k">Typical client revenue band</div>
+                <div className={s.v}>RM 6M</div>
+                <div className={s.k}>Typical client revenue band</div>
               </div>
               <div>
-                <div className="v">2 min</div>
-                <div className="k">From upload to emailed analysis</div>
+                <div className={s.v}>2 min</div>
+                <div className={s.k}>From upload to emailed analysis</div>
               </div>
             </div>
 
@@ -78,27 +78,27 @@ export default function RegisterPage() {
               <li>
                 <Tick />
                 <span>
-                  <b>Margin bridge</b> — where every ringgit of revenue goes before it reaches
+                  <b>Margin bridge.</b> Where every ringgit of revenue goes before it reaches
                   profit.
                 </span>
               </li>
               <li>
                 <Tick />
                 <span>
-                  <b>Cost gaps</b> — each operating expense line against revenue, ranked by size.
+                  <b>Cost gaps.</b> Each operating expense line against revenue, ranked by size.
                 </span>
               </li>
               <li>
                 <Tick />
                 <span>
-                  <b>Revenue split</b> — how much of your growth came from price rather than
+                  <b>Revenue split.</b> How much of your growth came from price rather than
                   volume.
                 </span>
               </li>
               <li>
                 <Tick />
                 <span>
-                  <b>Your history</b> — every analysis stays on your dashboard to compare against.
+                  <b>Your history.</b> Every analysis stays on your dashboard to compare against.
                 </span>
               </li>
             </ul>
@@ -108,7 +108,7 @@ export default function RegisterPage() {
                 We had been reading the same P&amp;L for four years. The mix split took twenty
                 minutes and changed how we price every retail SKU.
               </p>
-              <div className="who">
+              <div className={s.who}>
                 <b>Faridah Ismail</b>
                 Finance Director, Teratai Beverages
               </div>

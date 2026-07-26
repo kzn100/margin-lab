@@ -1,0 +1,20 @@
+/* Identity block, right of the nav links. */
+.who {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: 8px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+.name {
+  font-size: 13px;
+  font-weight: 600;
+}
+/* On a phone the avatar carries the identity; the name would push the nav onto
+   a second line. */
+@media (max-width: 700px) {
+  .name {
+    display: none;
+  }
+}

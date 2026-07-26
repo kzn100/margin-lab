@@ -148,12 +148,12 @@
 .dropOver svg {
   color: var(--accent);
 }
-.drop .t {
+.t {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
-.drop .d {
+.d {
   font-size: 12px;
   color: var(--text-secondary);
 }
@@ -172,14 +172,14 @@
   flex: none;
   color: var(--accent);
 }
-.filePill .n {
+.n {
   font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.filePill .s {
+.size {
   color: var(--text-muted);
   margin-left: auto;
   flex: none;
@@ -234,12 +234,12 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
-.proof .v {
+.v {
   font-size: 24px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
-.proof .k {
+.k {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 3px;
@@ -254,12 +254,12 @@
   line-height: 1.6;
   color: var(--text-primary);
 }
-.quote .who {
+.who {
   margin-top: 12px;
   font-size: 13px;
   color: var(--text-muted);
 }
-.quote .who b {
+.who b {
   display: block;
   color: var(--text-secondary);
   font-weight: 600;

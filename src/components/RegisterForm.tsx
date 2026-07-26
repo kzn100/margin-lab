@@ -372,8 +372,8 @@ export function RegisterForm() {
                 <path d="M12 15.5V4M8 7.6 12 3.6l4 4" />
                 <path d="M3.5 15v3.5a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2V15" />
               </svg>
-              <span className="t">Drop your file here, or browse</span>
-              <span className="d">CSV or XLSX, up to 5 MB, using our template</span>
+              <span className={s.t}>Drop your file here, or browse</span>
+              <span className={s.d}>CSV or XLSX, up to 5 MB, using our template</span>
               <input
                 ref={fileInput}
                 id="regFile"
@@ -401,8 +401,8 @@ export function RegisterForm() {
                 <path d="M9 1.5H4.5a1.5 1.5 0 0 0-1.5 1.5v10a1.5 1.5 0 0 0 1.5 1.5h7a1.5 1.5 0 0 0 1.5-1.5V5.5Z" />
                 <path d="M9 1.5v4h4" />
               </svg>
-              <span className="n">{file.name}</span>
-              <span className="s">{fmtSize(file.size)}</span>
+              <span className={s.n}>{file.name}</span>
+              <span className={s.size}>{fmtSize(file.size)}</span>
               <button
                 type="button"
                 aria-label="Remove file"

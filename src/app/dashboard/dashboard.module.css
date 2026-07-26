@@ -1,0 +1,22 @@
+/* /dashboard — tiles, table and controls come from tokens.css. */
+
+.tiles3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 900px) {
+  .tiles3 {
+    grid-template-columns: 1fr;
+  }
+}
+.sec {
+  margin-top: 16px;
+}
+.head {
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.headCta {
+  margin-left: auto;
+}
