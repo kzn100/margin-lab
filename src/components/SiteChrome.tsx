@@ -6,7 +6,7 @@ import { Brand } from "@/components/Brand";
  * every nav link except the primary CTA below 620px, so the header stays on
  * one line on a phone. Product headers keep their nav.
  */
-export function SiteHeader({ current }: { current?: "articles" | "how" }) {
+export function SiteHeader({ current }: { current?: "articles" | "how" | "about" }) {
   return (
     <header className="hdr" data-nav="marketing">
       <div className="wrap">
@@ -17,6 +17,9 @@ export function SiteHeader({ current }: { current?: "articles" | "how" }) {
           </Link>
           <Link className="opt" href="/#how-it-works" aria-current={current === "how" ? "page" : undefined}>
             How it works
+          </Link>
+          <Link className="opt" href="/about" aria-current={current === "about" ? "page" : undefined}>
+            About
           </Link>
           <Link href="/login">Log in</Link>
           <Link className="btn btn-primary" href="/register" style={{ marginLeft: 8 }}>
@@ -34,6 +37,7 @@ export function SiteFooter() {
       <div className="wrap">
         <span>Margin Lab</span>
         <Link href="/articles">Articles</Link>
+        <Link href="/about">About</Link>
         <Link href="/login">Log in</Link>
         <Link href="/register">Free analysis</Link>
         <span style={{ marginLeft: "auto" }}>Sample figures shown for illustration.</span>
