@@ -6,6 +6,7 @@ import { parsePnl, PnlParseError } from "@/lib/pnl/parse";
 import { sendResultsEmail } from "@/lib/email/results";
 import { sendEmail } from "@/lib/email/send";
 import { renderUploadReminderEmail } from "@/lib/email/upload-reminder";
+import { BUCKET, recordRejectedUpload, safeStoragePath } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
@@ -61,6 +62,19 @@ export async function POST(request: Request) {
 
   const buffer = hasFile ? Buffer.from(await file.arrayBuffer()) : null;
 
+  const admin = createAdminClient();
+
+  /** Keeps the file behind a rejection. Somebody who tried is worth calling. */
+  const keepRejected = (reason: string) =>
+    recordRejectedUpload(admin, {
+      email,
+      company,
+      fileName: (file as File).name,
+      buffer: buffer as Buffer,
+      contentType: (file as File).type,
+      reason,
+    });
+
   // Parse before creating anything. A rejected file should not leave an orphan
   // account behind that blocks the user from retrying with the same email.
   let metrics;
@@ -68,13 +82,16 @@ export async function POST(request: Request) {
     try {
       metrics = computeMetrics(await parsePnl(buffer, file.name));
     } catch (error) {
-      if (error instanceof PnlParseError) return fail({ error: error.message, field: "file" });
-      console.error("[register] unexpected parse failure", error);
-      return fail({ error: "We could not read that file. Check it against the template.", field: "file" });
+      const shown =
+        error instanceof PnlParseError
+          ? error.message
+          : "We could not read that file. Check it against the template.";
+      if (!(error instanceof PnlParseError))
+        console.error("[register] unexpected parse failure", error);
+      await keepRejected(shown);
+      return fail({ error: shown, field: "file" });
     }
   }
-
-  const admin = createAdminClient();
 
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
@@ -89,6 +106,9 @@ export async function POST(request: Request) {
   if (createError || !created.user) {
     const message = createError?.message ?? "";
     if (/already|registered|exists/i.test(message)) {
+      // The file parsed fine and the person is real — they just already have an
+      // account. The strongest callback signal of the three rejections.
+      if (hasFile && buffer) await keepRejected("Email already registered.");
       return fail({
         error: "That email already has an account. Log in and upload from your dashboard.",
         field: "email",
@@ -155,10 +175,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ redirect: "/dashboard" });
   }
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-80);
-  const path = `${userId}/${lead.id}-${safeName}`;
+  const path = `${userId}/${lead.id}-${safeStoragePath(file.name)}`;
   const { error: uploadError } = await admin.storage
-    .from("pnl-uploads")
+    .from(BUCKET)
     .upload(path, buffer, { contentType: file.type || "text/csv", upsert: false });
   if (uploadError) return abort("storage upload failed", uploadError);
 

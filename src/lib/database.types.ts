@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      consult_requests: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          pdf_path: string
+          result_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          pdf_path: string
+          result_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          pdf_path?: string
+          result_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consult_requests_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consult_requests_result_id_fkey"
+            columns: ["result_id"]
+            isOneToOne: false
+            referencedRelation: "pnl_results"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           company: string
@@ -169,6 +208,42 @@ export type Database = {
           email?: string
           followed_up_at?: string | null
           id?: string
+        }
+        Relationships: []
+      }
+      upload_attempts: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          reason: string
+          user_id: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          reason: string
+          user_id?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          reason?: string
+          user_id?: string | null
         }
         Relationships: []
       }

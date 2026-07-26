@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { computeMetrics } from "@/lib/pnl/compute";
 import { parsePnl, PnlParseError } from "@/lib/pnl/parse";
 import { sendResultsEmail } from "@/lib/email/results";
+import { BUCKET, recordRejectedUpload, safeStoragePath } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
@@ -45,13 +46,30 @@ export async function POST(request: Request) {
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
+  // leads/pnl_uploads/pnl_results have no INSERT policy — RLS only covers
+  // read, so writes go through the service-role client, same as /api/register.
+  const admin = createAdminClient();
+
   let metrics;
   try {
     metrics = computeMetrics(await parsePnl(buffer, file.name));
   } catch (error) {
-    if (error instanceof PnlParseError) return fail({ error: error.message, field: "file" });
-    console.error("[analyses] unexpected parse failure", error);
-    return fail({ error: "We could not read that file. Check it against the template.", field: "file" });
+    const shown =
+      error instanceof PnlParseError
+        ? error.message
+        : "We could not read that file. Check it against the template.";
+    if (!(error instanceof PnlParseError))
+      console.error("[analyses] unexpected parse failure", error);
+    // Kept even though it failed: what somebody tried to upload is worth seeing.
+    await recordRejectedUpload(admin, {
+      userId: user.id,
+      email: user.email ?? "",
+      fileName: file.name,
+      buffer,
+      contentType: file.type,
+      reason: shown,
+    });
+    return fail({ error: shown, field: "file" });
   }
   const pnlType = metrics.period.months >= 12 ? "full-year" : "monthly";
 
@@ -67,10 +85,6 @@ export async function POST(request: Request) {
     previousLead?.company ?? (user.user_metadata?.company as string | undefined) ?? "";
   const jobRole = previousLead?.job_role ?? "";
   const mobile = previousLead?.mobile ?? "";
-
-  // leads/pnl_uploads/pnl_results have no INSERT policy — RLS only covers
-  // read, so writes go through the service-role client, same as /api/register.
-  const admin = createAdminClient();
 
   const { data: lead, error: leadError } = await admin
     .from("leads")
@@ -96,10 +110,9 @@ export async function POST(request: Request) {
     return fail({ error: "Something went wrong saving your analysis. Try again.", status: 500 });
   };
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-80);
-  const path = `${user.id}/${lead.id}-${safeName}`;
+  const path = `${user.id}/${lead.id}-${safeStoragePath(file.name)}`;
   const { error: uploadError } = await admin.storage
-    .from("pnl-uploads")
+    .from(BUCKET)
     .upload(path, buffer, { contentType: file.type || "text/csv", upsert: false });
   if (uploadError) return abort("storage upload failed", uploadError);
 

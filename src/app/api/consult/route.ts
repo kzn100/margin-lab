@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
   consultPdfFilename,
@@ -8,12 +9,18 @@ import {
 import { sendEmail } from "@/lib/email/send";
 import { renderTextPdf } from "@/lib/pdf";
 import type { PnlMetrics } from "@/lib/pnl/compute";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { BUCKET } from "@/lib/uploads";
 
 export const runtime = "nodejs";
 
-/** Where consultation requests land. Not an env var — one inbox, one owner. */
-const CONSULT_TO = "keng@ikorek.com";
+/**
+ * Where consultation requests land. Defaults to the sending mailbox, which is
+ * the same inbox in every deployment so far — set CONSULT_EMAIL to split them.
+ * Read at call time, not module load, so it is not baked into a build.
+ */
+const consultTo = () => process.env.CONSULT_EMAIL || process.env.SMTP_USER || "";
 
 /**
  * Raises an RGM consultation request for one saved analysis.
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
 
   const { data } = await supabase
     .from("pnl_results")
-    .select("id, metrics, leads (name, company, job_role, mobile, email)")
+    .select("id, lead_id, metrics, leads (name, company, job_role, mobile, email)")
     .eq("id", resultId)
     .maybeSingle();
   if (!data) return NextResponse.json({ error: "Analysis not found." }, { status: 404 });
@@ -64,17 +71,43 @@ export async function POST(request: Request) {
   const mail = renderConsultRequestEmail(consult);
   const pdf = renderTextPdf(consultPdfTitle(consult), renderConsultRequestPdfLines(consult));
 
-  const sent = await sendEmail(CONSULT_TO, mail.subject, mail.text, [
+  const to = consultTo();
+  const sent = await sendEmail(to, mail.subject, mail.text, [
     { filename: consultPdfFilename(consult), content: pdf, contentType: "application/pdf" },
   ]);
   if (!sent.sent) {
-    // The user gets a real failure rather than a false "we'll be in touch" —
-    // nothing else records the request, so a silent drop would lose the lead.
+    // The user gets a real failure rather than a false "we'll be in touch".
     console.error("[consult] request email not sent", { resultId, error: sent.error });
     return NextResponse.json(
-      { error: "We could not send the request. Email keng@ikorek.com directly." },
+      {
+        error: to
+          ? `We could not send the request. Email ${to} directly.`
+          : "We could not send the request. Please try again later.",
+      },
       { status: 502 },
     );
+  }
+
+  // Kept after the send, not before: the email is the thing that matters, and
+  // a storage hiccup must not cost somebody their request. Same reason it does
+  // not fail the response — the copy is for reviewing and re-sending later.
+  try {
+    const admin = createAdminClient();
+    const pdfPath = `${user.id}/consult-${randomUUID()}.pdf`;
+    const { error: uploadError } = await admin.storage
+      .from(BUCKET)
+      .upload(pdfPath, pdf, { contentType: "application/pdf" });
+    if (uploadError) throw uploadError;
+
+    const { error: rowError } = await admin
+      .from("consult_requests")
+      .insert({ lead_id: data.lead_id, result_id: data.id, pdf_path: pdfPath });
+    if (rowError) throw rowError;
+  } catch (error) {
+    console.error("[consult] request sent but not recorded", {
+      resultId,
+      error: error instanceof Error ? error.message : error,
+    });
   }
 
   return NextResponse.json({ ok: true });

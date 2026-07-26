@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { LeadsPerWeekChart } from "@/components/Charts";
-import { LeadsTable, type LeadRow } from "@/components/LeadsTable";
+import { LeadsTable, fileHref, signedUp, type LeadRow } from "@/components/LeadsTable";
 import { SiteFooter } from "@/components/SiteChrome";
 import {
   JOB_ROLES,
@@ -115,13 +115,25 @@ export default async function AdminPage({
   // Only the analyses for the leads actually on screen, so the page cost does
   // not grow with the size of the CRM.
   const pageLeadIds = leads.map((l) => l.id);
-  const { data: results } = pageLeadIds.length
-    ? await supabase
-        .from("pnl_results")
-        .select("id, lead_id, created_at, metrics")
-        .in("lead_id", pageLeadIds)
-        .order("created_at", { ascending: false })
-    : { data: [] };
+  const [{ data: results }, { data: uploads }, { data: consults }] = pageLeadIds.length
+    ? await Promise.all([
+        supabase
+          .from("pnl_results")
+          .select("id, lead_id, created_at, metrics")
+          .in("lead_id", pageLeadIds)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("pnl_uploads")
+          .select("lead_id, file_path, created_at")
+          .in("lead_id", pageLeadIds)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("consult_requests")
+          .select("lead_id, pdf_path, created_at")
+          .in("lead_id", pageLeadIds)
+          .order("created_at", { ascending: false }),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
 
   const latestByLead = new Map<string, { id: string; netMarginPct: number }>();
   for (const r of results ?? []) {
@@ -133,10 +145,31 @@ export default async function AdminPage({
     });
   }
 
+  // Same newest-first trick as the analyses above: first seen per lead wins.
+  const firstBy = <T,>(rows: T[], key: (row: T) => string, value: (row: T) => string) => {
+    const map = new Map<string, string>();
+    for (const row of rows) if (!map.has(key(row))) map.set(key(row), value(row));
+    return map;
+  };
+  const uploadByLead = firstBy(uploads ?? [], (u) => u.lead_id, (u) => u.file_path);
+  const consultByLead = firstBy(consults ?? [], (c) => c.lead_id, (c) => c.pdf_path);
+
   const rows: LeadRow[] = leads.map((lead) => ({
     ...lead,
     result: latestByLead.get(lead.id) ?? null,
+    files: {
+      pnl: uploadByLead.get(lead.id) ?? null,
+      consult: consultByLead.get(lead.id) ?? null,
+    },
   }));
+
+  // Uploads nobody ever got an analysis from. Not paginated: this is a list to
+  // work through, and when it is long the answer is to fix the parser.
+  const { data: rejected } = await supabase
+    .from("upload_attempts")
+    .select("id, created_at, email, company, file_name, file_path, file_size, reason")
+    .order("created_at", { ascending: false })
+    .limit(25);
 
   const buckets = weeklyBuckets(
     (signupHistory.data ?? []).map((r) => r.created_at),
@@ -384,6 +417,52 @@ export default async function AdminPage({
             </>
           )}
         </section>
+
+        {rejected && rejected.length > 0 && (
+          <section className={`card ${s.sec}`}>
+            <div className="chdr">
+              <div>
+                <h2>Rejected uploads</h2>
+                <p>
+                  Files that never became an analysis — the parser refused them, or the email was
+                  already registered. The file itself is kept either way.
+                </p>
+              </div>
+              <span className="chip">Last {rejected.length}</span>
+            </div>
+
+            <div className="dtable-wrap" style={{ marginTop: 18 }}>
+              <table className="dtable">
+                <thead>
+                  <tr>
+                    <th scope="col">When</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Company</th>
+                    <th scope="col">File</th>
+                    <th scope="col">Why it was refused</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rejected.map((r) => (
+                    <tr key={r.id}>
+                      <td className="muted">{signedUp(r.created_at)}</td>
+                      <td>
+                        <a href={`mailto:${r.email}`}>{r.email}</a>
+                      </td>
+                      <td className="muted">{r.company ?? "—"}</td>
+                      <td>
+                        <a className="btn btn-quiet" href={fileHref(r.file_path)}>
+                          {r.file_name}
+                        </a>
+                      </td>
+                      <td className="muted">{r.reason}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
       </main>
 
       <SiteFooter />

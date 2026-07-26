@@ -14,9 +14,13 @@ export type LeadRow = {
   created_at: string;
   /** Latest analysis for this lead, if one exists. */
   result: { id: string; netMarginPct: number } | null;
+  /** Storage paths, not signed URLs — signing happens in /api/files on click. */
+  files: { pnl: string | null; consult: string | null };
 };
 
-const signedUp = (iso: string) =>
+export const fileHref = (path: string) => `/api/files?path=${encodeURIComponent(path)}`;
+
+export const signedUp = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 const pct = (n: number) => `${n < 0 ? "−" : ""}${Math.abs(n).toFixed(1)}%`;
@@ -175,6 +179,7 @@ export function LeadsTable({
                 href={sortHrefs.created_at}
               />
               <th scope="col">Analysis</th>
+              <th scope="col">Files</th>
             </tr>
           </thead>
           <tbody>
@@ -203,6 +208,24 @@ export function LeadsTable({
                     <Link className="btn btn-quiet" href={`/results/${lead.result.id}`}>
                       {pct(lead.result.netMarginPct)}
                     </Link>
+                  ) : (
+                    <span className="muted">None</span>
+                  )}
+                </td>
+                <td>
+                  {lead.files.pnl || lead.files.consult ? (
+                    <>
+                      {lead.files.pnl && (
+                        <a className="btn btn-quiet" href={fileHref(lead.files.pnl)}>
+                          P&amp;L
+                        </a>
+                      )}
+                      {lead.files.consult && (
+                        <a className="btn btn-quiet" href={fileHref(lead.files.consult)}>
+                          PDF
+                        </a>
+                      )}
+                    </>
                   ) : (
                     <span className="muted">None</span>
                   )}
