@@ -1,3 +1,26 @@
+/* Full-width strip above the nav so an admin session is never mistaken for a
+   regular one, even on a quick glance. Sticky itself, with .hdr's own sticky
+   offset below it, so the two stay stacked together on scroll instead of
+   .hdr's top:0 riding up over this bar. */
+.adminBar {
+  position: sticky;
+  top: 0;
+  z-index: 41;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--critical);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.adminBar + :global(.hdr) {
+  top: 22px;
+}
+
 /* Identity block, right of the nav links. */
 .who {
   display: flex;

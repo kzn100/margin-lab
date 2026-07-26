@@ -20,47 +20,50 @@ export function AppHeader({
   current?: "dashboard" | "leads" | "marketing";
 }) {
   return (
-    <header className="hdr">
-      <div className="wrap">
-        <Brand />
-        <nav>
-          {role === "admin" ? (
-            <>
-              <Link href="/admin" aria-current={current === "leads" ? "page" : undefined}>
-                Leads
-              </Link>
-              <Link
-                href="/admin/marketing"
-                aria-current={current === "marketing" ? "page" : undefined}
-              >
-                Marketing
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/dashboard" aria-current={current === "dashboard" ? "page" : undefined}>
-                Dashboard
-              </Link>
-              <Link className="opt" href="/articles">
-                Articles
-              </Link>
-            </>
-          )}
+    <>
+      {role === "admin" && <div className={s.adminBar}>Admin</div>}
+      <header className="hdr">
+        <div className="wrap">
+          <Brand />
+          <nav>
+            {role === "admin" ? (
+              <>
+                <Link href="/admin" aria-current={current === "leads" ? "page" : undefined}>
+                  Leads
+                </Link>
+                <Link
+                  href="/admin/marketing"
+                  aria-current={current === "marketing" ? "page" : undefined}
+                >
+                  Marketing
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard" aria-current={current === "dashboard" ? "page" : undefined}>
+                  Dashboard
+                </Link>
+                <Link className="opt" href="/articles">
+                  Articles
+                </Link>
+              </>
+            )}
 
-          <form action={logout}>
-            <button className="btn btn-quiet" type="submit">
-              Log out
-            </button>
-          </form>
+            <form action={logout}>
+              <button className="btn btn-quiet" type="submit">
+                Log out
+              </button>
+            </form>
 
-          <span className={s.who}>
-            <span className="avatar" aria-hidden="true">
-              {initials(name, email)}
+            <span className={s.who}>
+              <span className="avatar" aria-hidden="true">
+                {initials(name, email)}
+              </span>
+              <span className={s.name}>{name || email}</span>
             </span>
-            <span className={s.name}>{name || email}</span>
-          </span>
-        </nav>
-      </div>
-    </header>
+          </nav>
+        </div>
+      </header>
+    </>
   );
 }
