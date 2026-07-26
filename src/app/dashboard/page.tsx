@@ -127,7 +127,7 @@ export default async function DashboardPage() {
                 : `${analyses.length} ${analyses.length === 1 ? "analysis" : "analyses"}. Most recent ${uploadedOn(latest.uploaded)}.`}
             </p>
           </div>
-          <Link className={`btn btn-primary ${s.headCta}`} href="/register">
+          <Link className={`btn btn-primary ${s.headCta}`} href="/analyses/new">
             New analysis
           </Link>
         </section>
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
                 Upload twelve months of P&amp;L in our template and your margin bridge, cost
                 breakdown and revenue split appear here.
               </p>
-              <Link className="btn btn-primary" href="/register" style={{ marginTop: 6 }}>
+              <Link className="btn btn-primary" href="/analyses/new" style={{ marginTop: 6 }}>
                 Run your first analysis
               </Link>
             </div>
