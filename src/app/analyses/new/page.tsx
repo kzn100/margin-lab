@@ -22,7 +22,6 @@ export default async function NewAnalysisPage() {
   if (role === "admin") redirect(homeFor(role));
 
   const name = (user.user_metadata?.name as string | undefined) ?? "";
-  const company = (user.user_metadata?.company as string | undefined) ?? "";
 
   return (
     <>
@@ -35,7 +34,7 @@ export default async function NewAnalysisPage() {
             <p className="sub">
               One upload. Your margin bridge, cost gaps and revenue split, back in minutes.
             </p>
-            <AnalysisForm name={name} company={company} />
+            <AnalysisForm />
           </div>
         </section>
       </main>

@@ -9,14 +9,6 @@ import s from "./auth.module.css";
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPT = [".csv", ".xlsx", ".xlsm", ".xls"];
 
-const ROLES = [
-  "Owner or founder",
-  "Finance director or CFO",
-  "Finance manager",
-  "Commercial or sales lead",
-  "Other",
-];
-
 type Errors = Partial<Record<string, string>>;
 
 const fmtSize = (bytes: number) =>
@@ -42,9 +34,10 @@ function ErrIcon() {
   );
 }
 
-export function AnalysisForm({ name, company }: { name: string; company: string }) {
+/** Uploads a P&L for an already-logged-in user. No profile questions — the
+ *  account already has them, and pnl_type is derived from the file server-side. */
+export function AnalysisForm() {
   const router = useRouter();
-  const formRef = useRef<HTMLFormElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -68,35 +61,18 @@ export function AnalysisForm({ name, company }: { name: string; company: string 
     setFile(f);
   }
 
-  function validate(data: FormData): Errors {
-    const next: Errors = {};
-    const req = (k: string, msg: string) => {
-      if (!String(data.get(k) ?? "").trim()) next[k] = msg;
-    };
-    req("name", "Enter your name.");
-    req("company", "Enter your company.");
-    req("job_role", "Select your role.");
-    req("mobile", "Enter a mobile number we can reach you on.");
-    if (!file) next.file = "Attach your P&L file.";
-    return next;
-  }
-
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
 
-    const data = new FormData(event.currentTarget);
-    const found = validate(data);
-    setErrors(found);
     setBanner(null);
-    if (Object.keys(found).length) {
-      formRef.current?.querySelector<HTMLElement>("[aria-invalid='true']")?.focus();
+    if (!file) {
+      setErrors({ file: "Attach your P&L file." });
       return;
     }
 
-    // The <input type="file"> is not inside the form's own data when the user
-    // dropped it, so attach the tracked File explicitly.
-    data.set("file", file!, file!.name);
+    const data = new FormData();
+    data.set("file", file, file.name);
 
     setSubmitting(true);
     try {
@@ -118,8 +94,7 @@ export function AnalysisForm({ name, company }: { name: string; company: string 
     }
   }
 
-  const fieldClass = (key: string) => (errors[key] ? `field ${"field-error"}` : "field");
-  const invalid = (key: string) => (errors[key] ? true : undefined);
+  const fieldClass = errors.file ? "field field-error" : "field";
 
   return (
     <>
@@ -130,113 +105,8 @@ export function AnalysisForm({ name, company }: { name: string; company: string 
         </div>
       )}
 
-      <form ref={formRef} onSubmit={onSubmit} noValidate>
-        <div className={s.pair}>
-          <div className={fieldClass("name")}>
-            <label htmlFor="anName">Full name</label>
-            <input
-              className="input"
-              id="anName"
-              name="name"
-              type="text"
-              autoComplete="name"
-              defaultValue={name}
-              aria-invalid={invalid("name")}
-              disabled={submitting}
-            />
-            {errors.name && (
-              <p className="err">
-                <ErrIcon />
-                {errors.name}
-              </p>
-            )}
-          </div>
-          <div className={fieldClass("company")}>
-            <label htmlFor="anCompany">Company</label>
-            <input
-              className="input"
-              id="anCompany"
-              name="company"
-              type="text"
-              autoComplete="organization"
-              defaultValue={company}
-              aria-invalid={invalid("company")}
-              disabled={submitting}
-            />
-            {errors.company && (
-              <p className="err">
-                <ErrIcon />
-                {errors.company}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className={s.pair}>
-          <div className={fieldClass("job_role")}>
-            <label htmlFor="anRole">Job role</label>
-            <select
-              className="input"
-              id="anRole"
-              name="job_role"
-              defaultValue=""
-              aria-invalid={invalid("job_role")}
-              disabled={submitting}
-            >
-              <option value="">Select one</option>
-              {ROLES.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-            {errors.job_role && (
-              <p className="err">
-                <ErrIcon />
-                {errors.job_role}
-              </p>
-            )}
-          </div>
-          <div className={fieldClass("mobile")}>
-            <label htmlFor="anMobile">Mobile</label>
-            <input
-              className="input"
-              id="anMobile"
-              name="mobile"
-              type="tel"
-              autoComplete="tel"
-              placeholder="+60 12 345 6789"
-              aria-invalid={invalid("mobile")}
-              disabled={submitting}
-            />
-            {errors.mobile && (
-              <p className="err">
-                <ErrIcon />
-                {errors.mobile}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
-          <legend>Which P&amp;L are you uploading?</legend>
-          <div className="choice-row">
-            <label className="choice">
-              <input type="radio" name="pnl_type" value="full-year" defaultChecked />
-              <span>
-                <span className="t">Full year</span>
-                <span className="d">One row per month, 12 months</span>
-              </span>
-            </label>
-            <label className="choice">
-              <input type="radio" name="pnl_type" value="monthly" />
-              <span>
-                <span className="t">Part year</span>
-                <span className="d">Fewer than 12 months</span>
-              </span>
-            </label>
-          </div>
-        </fieldset>
-
-        <div className={fieldClass("file")}>
+      <form onSubmit={onSubmit} noValidate>
+        <div className={fieldClass}>
           <div className={s.labelRow}>
             <label htmlFor="anFile">P&amp;L file</label>
             <a href="/margin-lab-pnl-template.csv" download>

@@ -10,8 +10,6 @@ export const runtime = "nodejs";
 // Same ceiling as /api/register — Netlify's function payload limit.
 const MAX_BYTES = 5 * 1024 * 1024;
 
-const PNL_TYPES = new Set(["full-year", "monthly"]);
-
 type Fail = { error: string; field?: string; status?: number };
 
 const fail = ({ error, field, status = 400 }: Fail) =>
@@ -19,9 +17,11 @@ const fail = ({ error, field, status = 400 }: Fail) =>
 
 /**
  * Adds another analysis for the already-authenticated caller. Sibling to
- * /api/register, minus account creation: the session already has a user, so
- * this only needs name/company/job_role/mobile/pnl_type/file, and reuses that
- * user_id and email on the new lead row instead of calling auth.admin.createUser.
+ * /api/register, minus account creation and minus re-asking the profile
+ * questions: name/company/job_role/mobile come from the caller's most recent
+ * lead row (RLS already scopes this read to their own), and pnl_type is
+ * derived from the parsed file instead of asked, so this endpoint only needs
+ * the file itself.
  */
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -37,19 +37,7 @@ export async function POST(request: Request) {
     return fail({ error: "Could not read the submitted form." });
   }
 
-  const str = (k: string) => String(form.get(k) ?? "").trim();
-  const name = str("name");
-  const company = str("company");
-  const jobRole = str("job_role");
-  const mobile = str("mobile");
-  const pnlType = str("pnl_type");
   const file = form.get("file");
-
-  if (!name) return fail({ error: "Enter your name.", field: "name" });
-  if (!company) return fail({ error: "Enter your company.", field: "company" });
-  if (!jobRole) return fail({ error: "Select your role.", field: "job_role" });
-  if (!mobile) return fail({ error: "Enter a mobile number.", field: "mobile" });
-  if (!PNL_TYPES.has(pnlType)) return fail({ error: "Choose which P&L you are uploading." });
   if (!(file instanceof File) || file.size === 0)
     return fail({ error: "Attach your P&L file.", field: "file" });
   if (file.size > MAX_BYTES)
@@ -65,6 +53,20 @@ export async function POST(request: Request) {
     console.error("[analyses] unexpected parse failure", error);
     return fail({ error: "We could not read that file. Check it against the template.", field: "file" });
   }
+  const pnlType = metrics.period.months >= 12 ? "full-year" : "monthly";
+
+  const { data: previousLead } = await supabase
+    .from("leads")
+    .select("name, company, job_role, mobile")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const name = previousLead?.name ?? (user.user_metadata?.name as string | undefined) ?? "";
+  const company =
+    previousLead?.company ?? (user.user_metadata?.company as string | undefined) ?? "";
+  const jobRole = previousLead?.job_role ?? "";
+  const mobile = previousLead?.mobile ?? "";
 
   // leads/pnl_uploads/pnl_results have no INSERT policy — RLS only covers
   // read, so writes go through the service-role client, same as /api/register.
